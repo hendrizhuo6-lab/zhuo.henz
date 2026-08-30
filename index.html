@@ -1,0 +1,137 @@
+<!doctype html>
+<html lang="id">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Domain Ops Console</title>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <!-- HEADER -->
+    <header class="header">
+      <div class="header-brand">
+        <div>
+          <h1>DOMAIN OPS CONSOLE</h1>
+          <p>Kelola data &amp; filter domain Anda di sini</p>
+        </div>
+      </div>
+      <div class="status-pill">
+        <span class="status-dot"></span>
+        <span>SYSTEM ONLINE</span>
+        <span id="systemClock">--:--:--</span>
+      </div>
+    </header>
+
+    <!-- MAIN LAYOUT -->
+    <div class="main-layout">
+      <!-- SIDEBAR NAVBAR -->
+      <nav class="navbar">
+        <div class="navbar-eyebrow">Pilihan layanan</div>
+        <button id="tab-home" class="navbar-button active">◈ FILTER</button>
+        <button id="tab-profile" class="navbar-button">◇ FILTER DOMAIN</button>
+        <button id="tab-about" class="navbar-button">◎ ABOUT</button>
+        <button id="tab-about2" class="navbar-button">◎ ABOUT</button>
+      </nav>
+
+      <!-- CONTENT AREA -->
+      <main class="content">
+        <div id="tab-content-home" class="tabs-content active">
+          <section id="tab-checker">
+            <h2 class="page-title">🔍 Cek Pergantian Domain</h2>
+
+            <div class="checker-grid">
+              <div class="checker-box">
+                <label>📦 Data Lama</label>
+                <textarea
+                  id="oldData"
+                  placeholder="Masukkan data lama di sini..."
+                ></textarea>
+              </div>
+              <div class="checker-box">
+                <label>📦 Data Baru</label>
+                <textarea
+                  id="newData"
+                  placeholder="Masukkan data baru di sini..."
+                ></textarea>
+              </div>
+            </div>
+
+            <div class="button-group">
+              <button class="btn btn-primary" id="checkBtn">
+                🔍 CEK PERGANTIAN
+              </button>
+              <button class="btn btn-secondary" id="resetBtn">↻ Reset</button>
+            </div>
+
+            <div class="result-area" id="resultArea">
+              <div id="statusContainer">
+                <span class="status-badge">⏳ Silakan tekan CEK</span>
+              </div>
+              <div id="reportContainer">
+                <div style="color: var(--text-faint); padding: 12px 0">
+                  Hasil perbandingan akan muncul di sini.
+                </div>
+              </div>
+            </div>
+          </section>
+
+          <!-- TABEL DATA -->
+          <div
+            id="table-container"
+            class="table-container"
+            style="margin-top: 24px"
+          >
+            <table id="data-table" class="data-table">
+              <thead id="table-head" class="table-head">
+                <tr id="head-kepala" class="table-header-row"></tr>
+              </thead>
+              <tbody id="isi-table" class="table-body"></tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- TAB 2: FILTER DOMAIN -->
+        <div id="tab-content-profile" class="tabs-content">
+          <h1 class="page-title">🗂 Pengelompokan Domain</h1>
+          <div class="profile-container">
+            <div class="box">
+              <h3>Paste Domain di Sini:</h3>
+              <textarea
+                id="domainInput"
+                placeholder="Paste daftar domain..."
+              ></textarea>
+            </div>
+
+            <div class="box">
+              <div class="box-header">
+                <h3>Hasil Pengelompokan:</h3>
+                <button
+                  id="btn-copy-output"
+                  class="btn btn-secondary btn-sm"
+                  type="button"
+                >
+                  Copy
+                </button>
+              </div>
+              <div id="output" class="result-box"></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- TAB 3: ABOUT -->
+        <div id="tab-content-about" class="tabs-content">
+          <h1 class="page-title">◎ Tentang Sistem</h1>
+          <p>Halaman mengenai sistem dan aplikasi.</p>
+        </div>
+
+           <!-- TAB 4: ABOUT -->
+        <div id="tab-content-about2" class="tabs-content">
+          <h1 class="page-title">◎ Tentang Sistem</h1>
+          <p>Halaman mengenai sistem dan aplikasi.</p>
+        </div>
+      </main>
+    </div>
+
+    <script src="main.js"></script>
+  </body>
+</html>
