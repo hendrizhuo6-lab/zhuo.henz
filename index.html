@@ -3,69 +3,125 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Domain Ops Console</title>
+    <title>Domain Ops Console v2.0</title>
     <link rel="stylesheet" href="styles.css" />
   </head>
   <body>
     <!-- HEADER -->
-    <header class="header">
+    <header class="header" role="banner">
       <div class="header-brand">
         <div>
           <h1>DOMAIN OPS CONSOLE</h1>
           <p>Kelola data &amp; filter domain Anda di sini</p>
         </div>
       </div>
-      <div class="status-pill">
-        <span class="status-dot"></span>
+      <div class="status-pill" role="status" aria-live="polite">
+        <span class="status-dot" aria-hidden="true"></span>
         <span>SYSTEM ONLINE</span>
-        <span id="systemClock">--:--:--</span>
+        <span id="systemClock" aria-label="Current time">--:--:--</span>
       </div>
     </header>
 
     <!-- MAIN LAYOUT -->
     <div class="main-layout">
       <!-- SIDEBAR NAVBAR -->
-      <nav class="navbar">
+      <nav class="navbar" role="tablist" aria-label="Main navigation">
         <div class="navbar-eyebrow">Pilihan layanan</div>
-        <button id="tab-home" class="navbar-button active">◈ FILTER</button>
-        <button id="tab-profile" class="navbar-button">◇ FILTER DOMAIN</button>
-        <button id="tab-dns" class="navbar-button">◈ DNS</button>
-        <button id="tab-about" class="navbar-button">◇ ABOUT</button>
-        <button id="tab-help" class="navbar-button">◎ HELP</button>
+        <button 
+          id="tab-home" 
+          class="navbar-button active" 
+          role="tab"
+          aria-selected="true"
+          aria-controls="tab-content-home"
+          tabindex="0"
+        >
+          ◈ FILTER
+        </button>
+        <button 
+          id="tab-profile" 
+          class="navbar-button" 
+          role="tab"
+          aria-selected="false"
+          aria-controls="tab-content-profile"
+          tabindex="-1"
+        >
+          ◇ FILTER DOMAIN
+        </button>
+        <button 
+          id="tab-dns" 
+          class="navbar-button" 
+          role="tab"
+          aria-selected="false"
+          aria-controls="tab-content-dns"
+          tabindex="-1"
+        >
+          ◈ DNS
+        </button>
+        <button 
+          id="tab-about" 
+          class="navbar-button" 
+          role="tab"
+          aria-selected="false"
+          aria-controls="tab-content-about"
+          tabindex="-1"
+        >
+          ◇ ABOUT
+        </button>
+        <button 
+          id="tab-help" 
+          class="navbar-button" 
+          role="tab"
+          aria-selected="false"
+          aria-controls="tab-content-help"
+          tabindex="-1"
+        >
+          ◎ HELP
+        </button>
       </nav>
 
       <!-- CONTENT AREA -->
-      <main class="content">
+      <main class="content" role="main">
         <!-- TAB 1: HOME / FILTER -->
-        <div id="tab-content-home" class="tabs-content active">
+        <div 
+          id="tab-content-home" 
+          class="tabs-content active" 
+          role="tabpanel"
+          aria-labelledby="tab-home"
+        >
           <section id="tab-checker">
             <h2 class="page-title">🔍 Cek Pergantian Domain</h2>
 
             <div class="checker-grid">
               <div class="checker-box">
-                <label>📦 Data Lama</label>
+                <label for="oldData">📦 Data Lama</label>
                 <textarea
                   id="oldData"
                   placeholder="Masukkan data lama di sini..."
+                  aria-describedby="oldDataHelp"
                 ></textarea>
+                <span id="oldDataHelp" class="sr-only">Tempelkan data domain lama dengan format [BRAND] diikuti daftar domain</span>
               </div>
               <div class="checker-box">
-                <label>📦 Data Baru</label>
+                <label for="newData">📦 Data Baru</label>
                 <textarea
                   id="newData"
                   placeholder="Masukkan data baru di sini..."
+                  aria-describedby="newDataHelp"
                 ></textarea>
+                <span id="newDataHelp" class="sr-only">Tempelkan data domain baru dengan format [BRAND] diikuti daftar domain</span>
               </div>
             </div>
 
             <div class="button-group">
-              <button class="btn btn-primary" id="checkBtn">
+              <button class="btn btn-primary" id="checkBtn" aria-label="Cek perbandingan domain">
                 🔍 CEK PERGANTIAN
               </button>
-              <button class="btn btn-secondary" id="resetBtn">↻ Reset</button>
+              <button class="btn btn-secondary" id="resetBtn" aria-label="Reset semua data">
+                ↻ Reset
+              </button>
             </div>
 
-            <div class="result-area" id="resultArea">
+            <div class="result-area" id="resultArea" role="region" aria-live="polite">
               <div id="statusContainer">
                 <span class="status-badge">⏳ Silakan tekan CEK</span>
               </div>
@@ -82,6 +138,8 @@
             id="table-container"
             class="table-container"
             style="margin-top: 24px"
+            role="region"
+            aria-label="Tabel data domain"
           >
             <table id="data-table" class="data-table">
               <thead id="table-head" class="table-head">
@@ -93,15 +151,22 @@
         </div>
 
         <!-- TAB 2: FILTER DOMAIN -->
-        <div id="tab-content-profile" class="tabs-content">
+        <div 
+          id="tab-content-profile" 
+          class="tabs-content" 
+          role="tabpanel"
+          aria-labelledby="tab-profile"
+        >
           <h1 class="page-title">🗂 Pengelompokan Domain</h1>
           <div class="profile-container">
             <div class="box">
-              <h3>Paste Domain di Sini:</h3>
+              <h3 for="domainInput">Paste Domain di Sini:</h3>
               <textarea
                 id="domainInput"
                 placeholder="Paste daftar domain..."
+                aria-describedby="domainInputHelp"
               ></textarea>
+              <span id="domainInputHelp" class="sr-only">Tempelkan daftar domain, satu per baris</span>
             </div>
 
             <div class="box">
@@ -111,17 +176,23 @@
                   id="btn-copy-output"
                   class="btn btn-secondary btn-sm"
                   type="button"
+                  aria-label="Copy hasil pengelompokan"
                 >
                   Copy
                 </button>
               </div>
-              <div id="output" class="result-box"></div>
+              <div id="output" class="result-box" role="list" aria-label="Hasil pengelompokan domain"></div>
             </div>
           </div>
         </div>
 
         <!-- TAB 3: DNS -->
-        <div id="tab-content-dns" class="tabs-content">
+        <div 
+          id="tab-content-dns" 
+          class="tabs-content" 
+          role="tabpanel"
+          aria-labelledby="tab-dns"
+        >
           <div class="container">
             <div class="title-bar">
               <h1>📊 Pemisah Domain &amp; Nameserver</h1>
@@ -137,12 +208,14 @@
                     id="inputData"
                     class="input-yellow"
                     placeholder="Tempelkan data di sini..."
+                    aria-describedby="inputDataHelp"
                   ></textarea>
+                  <span id="inputDataHelp" class="sr-only">Tempelkan data mentah domain dan nameserver</span>
                   <div class="btn-group">
-                    <button class="btn btn-outline" onclick="clearInput()">
+                    <button class="btn btn-outline" onclick="clearInput()" aria-label="Bersihkan input">
                       🧹 Bersihkan
                     </button>
-                    <button class="btn btn-primary" onclick="processData()">
+                    <button class="btn btn-primary" onclick="processData()" aria-label="Proses data">
                       🔄 Proses
                     </button>
                   </div>
@@ -152,16 +225,16 @@
               <div class="column-box">
                 <div class="column-header header-green">
                   📊 Hasil (Domain &amp; NS)
-                  <span class="status-badge" id="rowCount">0</span>
+                  <span class="status-badge" id="rowCount" aria-label="Jumlah baris">0</span>
                 </div>
                 <div class="column-body">
-                  <div class="output-table-container" id="resultContainer">
+                  <div class="output-table-container" id="resultContainer" role="table" aria-label="Tabel hasil domain dan nameserver">
                     <table class="sheet-table" id="resultSheet">
                       <thead>
                         <tr>
-                          <th>#</th>
-                          <th>🌐 Domain</th>
-                          <th>🖥️ Nameserver</th>
+                          <th scope="col">#</th>
+                          <th scope="col">🌐 Domain</th>
+                          <th scope="col">🖥️ Nameserver</th>
                         </tr>
                       </thead>
                       <tbody id="resultTable">
@@ -174,16 +247,13 @@
                     </table>
                   </div>
                   <div class="btn-group">
-                    <button class="btn btn-copy-all" onclick="copyAllData()">
+                    <button class="btn btn-copy-all" onclick="copyAllData()" aria-label="Copy semua data (tab separated)">
                       📋 Copy Semua (Tab)
                     </button>
-                    <button
-                      class="btn btn-copy-cell"
-                      onclick="copyActiveCell()"
-                    >
+                    <button class="btn btn-copy-cell" onclick="copyActiveCell()" aria-label="Copy sel yang aktif">
                       📄 Copy Sel Aktif
                     </button>
-                    <button class="btn btn-success" onclick="copyNSOnly()">
+                    <button class="btn btn-success" onclick="copyNSOnly()" aria-label="Copy nameserver saja">
                       📋 Copy NS Saja
                     </button>
                   </div>
@@ -196,35 +266,104 @@
             </div>
           </div>
 
-          <div id="copyFeedback" class="copy-feedback">
+          <div id="copyFeedback" class="copy-feedback" role="alert" aria-live="assertive">
             ✅ Disalin ke clipboard!
           </div>
         </div>
 
         <!-- TAB 4: ABOUT -->
-        <div id="tab-content-about" class="tabs-content">
-                      <!-- <div class="instructions">
-              📋 <strong>Cara Penggunaan:</strong> Tempelkan data mentah di
-              kolom kiri. Hasil otomatis terpisah di tabel.
-              <br />
-              🔵 <strong>Domain</strong> = warna biru | 🟣
-              <strong>Nameserver</strong> = warna abu-abu (tanpa spasi setelah
-              koma)
-              <br />
-              ⌨️ <strong>Navigasi:</strong> <kbd>Tab</kbd> pindah sel |
-              <kbd>↑</kbd> <kbd>↓</kbd> <kbd>←</kbd> <kbd>→</kbd> navigasi |
-              <kbd>Ctrl+C</kbd> copy sel aktif
-              <br />
-              📋 <strong>Copy:</strong> Klik
-              <strong>"Copy Semua (Tab)"</strong> untuk menyalin semua data
-              (siap paste ke spreadsheet).
-            </div> -->
+        <div 
+          id="tab-content-about" 
+          class="tabs-content" 
+          role="tabpanel"
+          aria-labelledby="tab-about"
+        >
+          <h1 class="page-title">ℹ️ Tentang Aplikasi</h1>
+          <div class="about-content">
+            <p><strong>Domain Ops Console v2.0</strong> adalah alat manajemen domain yang dirancang untuk tim operasional.</p>
+            
+            <h2>Fitur Utama:</h2>
+            <ul>
+              <li><strong>🔍 Cek Pergantian Domain</strong> - Bandingkan data lama dan baru dengan validasi otomatis</li>
+              <li><strong>🗂 Filter Domain</strong> - Kelompokkan domain berdasarkan brand dengan auto-detection</li>
+              <li><strong>📊 DNS Parser</strong> - Pisahkan domain dan nameserver dari data mentah</li>
+            </ul>
+
+            <h2>Teknologi:</h2>
+            <ul>
+              <li>Vanilla JavaScript (ES6+)</li>
+              <li>CSS Custom Properties untuk theming</li>
+              <li>Clipboard API dengan fallback</li>
+              <li>ARIA accessibility support</li>
+            </ul>
+
+            <h2>Keamanan:</h2>
+            <ul>
+              <li>✅ XSS Protection - Semua input di-sanitasi</li>
+              <li>✅ Input Validation - Validasi ketat sebelum proses</li>
+              <li>✅ Error Handling - Try-catch di semua fungsi kritis</li>
+            </ul>
+          </div>
         </div>
 
         <!-- TAB 5: HELP -->
-        <div id="tab-content-help" class="tabs-content">
-          <h1 class="page-title">◎ Bantuan</h1>
-          <p>Halaman bantuan dan panduan penggunaan.</p>
+        <div 
+          id="tab-content-help" 
+          class="tabs-content" 
+          role="tabpanel"
+          aria-labelledby="tab-help"
+        >
+          <h1 class="page-title">◎ Bantuan & Panduan</h1>
+          
+          <div class="help-content">
+            <section>
+              <h2>📖 Cara Penggunaan</h2>
+              
+              <h3>1. Cek Pergantian Domain</h3>
+              <ol>
+                <li>Masukkan data lama di kolom kiri dengan format: <code>[BRAND]</code> diikuti daftar domain</li>
+                <li>Masukkan data baru di kolom kanan dengan format yang sama</li>
+                <li>Klik <strong>CEK PERGANTIAN</strong> untuk membandingkan</li>
+                <li>Hasil akan menunjukkan perbedaan per brand dan kategori</li>
+              </ol>
+
+              <h3>2. Filter Domain</h3>
+              <ol>
+                <li>Tempelkan daftar domain di kolom kiri (satu per baris)</li>
+                <li>Hasil pengelompokan otomatis muncul di kolom kanan</li>
+                <li>Klik <strong>Copy</strong> untuk menyalin hasil terformat</li>
+              </ol>
+
+              <h3>3. DNS Parser</h3>
+              <ol>
+                <li>Tempelkan data mentah (domain + nameserver) di kolom kiri</li>
+                <li>Klik <strong>Proses</strong> atau tunggu auto-process</li>
+                <li>Data terpisah otomatis di tabel hasil</li>
+                <li>Gunakan tombol copy untuk mengekspor data</li>
+              </ol>
+            </section>
+
+            <section>
+              <h2>⌨️ Shortcut Keyboard</h2>
+              <ul>
+                <li><kbd>Ctrl+C</kbd> - Copy sel aktif (di tabel DNS)</li>
+                <li><kbd>Tab</kbd> - Navigasi antar sel</li>
+                <li><kbd>↑</kbd> <kbd>↓</kbd> <kbd>←</kbd> <kbd>→</kbd> - Navigasi sel</li>
+                <li><kbd>Enter</kbd> - Pindah ke baris berikutnya</li>
+              </ul>
+            </section>
+
+            <section>
+              <h2>🐛 Melaporkan Bug</h2>
+              <p>Jika menemukan bug, silakan laporkan dengan detail:</p>
+              <ul>
+                <li>Langkah-langkah untuk mereproduksi</li>
+                <li>Data yang digunakan (jika bisa)</li>
+                <li>Screenshot error</li>
+                <li>Browser dan versi</li>
+              </ul>
+            </section>
+          </div>
         </div>
       </main>
     </div>
