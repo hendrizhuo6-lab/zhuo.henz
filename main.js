@@ -355,7 +355,7 @@
     let html = `
       <div class="total-domain">
         <span>Lama&nbsp; : <strong>${result.totalOld}</strong></span>
-        <span>Baru&nbsp; : <strong>${result.totalNew}</strong></span>
+        <span>Baru&nstrongbsp; : <strong>${result.totalNew}</strong></span>
       </div>
     `;
 
@@ -418,3 +418,448 @@
 
   renderResult(null);
 })();
+
+(function () {
+        const inputData = document.getElementById("inputData");
+        const resultTable = document.getElementById("resultTable");
+        const rowCount = document.getElementById("rowCount");
+        const feedback = document.getElementById("copyFeedback");
+
+        let processedDomains = [];
+        let processedNS = [];
+        let lastFocusedCell = null; // Untuk menyimpan cell terakhir yang difokuskan
+
+        // ============================================================
+        // 1. PROSES DATA
+        // ============================================================
+        function processData() {
+          const text = inputData.value;
+          const lines = text
+            .split("\n")
+            .map((l) => l.trim())
+            .filter((l) => l !== "");
+
+          processedDomains = [];
+          processedNS = [];
+
+          let currentDomain = "";
+          let currentNS = [];
+
+          lines.forEach((line) => {
+            const isNS =
+              line.includes(".ns.") ||
+              line.includes("ns.cloudflare") ||
+              (line.split(".").length > 2 &&
+                (line.toLowerCase().includes("ns") ||
+                  line.toLowerCase().includes("cloudflare")));
+
+            const isDomain =
+              !isNS &&
+              (line.endsWith(".com") ||
+                line.endsWith(".net") ||
+                line.endsWith(".org") ||
+                line.endsWith(".id") ||
+                line.endsWith(".co.id") ||
+                line.endsWith(".xyz") ||
+                line.endsWith(".info") ||
+                line.endsWith(".biz") ||
+                (line.includes(".") && line.split(".").length === 2));
+
+            if (isDomain) {
+              if (currentDomain) {
+                processedDomains.push(currentDomain);
+                processedNS.push(currentNS.join(","));
+              }
+              currentDomain = line;
+              currentNS = [];
+            } else if (isNS && currentDomain !== "") {
+              currentNS.push(line);
+            } else if (!isDomain && !isNS && currentDomain !== "") {
+              if (line !== currentDomain) {
+                currentNS.push(line);
+              }
+            }
+          });
+
+          if (currentDomain) {
+            processedDomains.push(currentDomain);
+            processedNS.push(currentNS.join(","));
+          }
+
+          renderTable();
+        }
+
+        // ============================================================
+        // 2. RENDER TABEL
+        // ============================================================
+        function renderTable() {
+          const count = processedDomains.length;
+          rowCount.textContent = count;
+
+          if (count === 0) {
+            resultTable.innerHTML = `<tr><td class="empty-msg" colspan="3">Data akan muncul di sini...</td></tr>`;
+            lastFocusedCell = null;
+            return;
+          }
+
+          let html = "";
+          for (let i = 0; i < count; i++) {
+            const rowNum = i + 1;
+            const domain = escapeHtml(processedDomains[i] || "");
+            const ns = escapeHtml(processedNS[i] || "");
+            html += `<tr>
+                        <td class="row-number">${rowNum}</td>
+                        <td class="domain-cell domain-highlight" tabindex="0" role="gridcell" data-value="${domain}" data-row="${i}" data-col="domain">${domain}</td>
+                        <td class="ns-cell ns-highlight" tabindex="0" role="gridcell" data-value="${ns}" data-row="${i}" data-col="ns">${ns}</td>
+                    </tr>`;
+          }
+          resultTable.innerHTML = html;
+
+          attachKeyboardNav("resultSheet");
+
+          // Jika ada lastFocusedCell, fokuskan kembali
+          if (lastFocusedCell) {
+            const cell = document.querySelector(
+              `#resultSheet td[data-row="${lastFocusedCell.row}"][data-col="${lastFocusedCell.col}"]`,
+            );
+            if (cell) {
+              setTimeout(() => cell.focus(), 50);
+              return;
+            }
+          }
+
+          // Jika tidak ada, fokus ke cell pertama
+          const firstCell = document.querySelector("#resultSheet td[tabindex]");
+          if (firstCell) setTimeout(() => firstCell.focus(), 50);
+        }
+
+
+
+// ============================================================
+// 3. KEYBOARD NAVIGASI
+// ============================================================
+function attachKeyboardNav(tableId) {
+  const table = document.getElementById(tableId);
+  if (!table) return;
+
+  if (table._keydownHandler) {
+    table.removeEventListener("keydown", table._keydownHandler);
+  }
+
+  const handler = function (e) {
+    const target = e.target;
+    if (target.tagName !== "TD" || !target.hasAttribute("tabindex")) return;
+
+    const row = target.parentElement;
+    const tbody = row.parentElement;
+    const rows = Array.from(tbody.querySelectorAll("tr"));
+    const currentRowIndex = rows.indexOf(row);
+
+    const cells = Array.from(row.querySelectorAll("td[tabindex]"));
+    const currentCellIndex = cells.indexOf(target);
+
+    let newRowIndex = currentRowIndex;
+    let newCellIndex = currentCellIndex;
+
+    switch (e.key) {
+      case "Enter": // <-- DITAMBAHKAN
+      case "ArrowDown":
+        e.preventDefault();
+        // Shift + Enter untuk naik ke atas (opsional tapi standar Excel/Sheet)
+        if (e.key === "Enter" && e.shiftKey) {
+          newRowIndex = Math.max(currentRowIndex - 1, 0);
+        } else {
+          newRowIndex = Math.min(currentRowIndex + 1, rows.length - 1);
+        }
+        break;
+      case "ArrowUp":
+        e.preventDefault();
+        newRowIndex = Math.max(currentRowIndex - 1, 0);
+        break;
+      case "ArrowRight":
+        e.preventDefault();
+        newCellIndex = Math.min(currentCellIndex + 1, cells.length - 1);
+        break;
+      case "ArrowLeft":
+        e.preventDefault();
+        newCellIndex = Math.max(currentCellIndex - 1, 0);
+        break;
+      case "Tab":
+        return;
+      default:
+        return;
+    }
+
+    if (
+      newRowIndex !== currentRowIndex ||
+      newCellIndex !== currentCellIndex
+    ) {
+      const newRow = rows[newRowIndex];
+      if (newRow) {
+        const newCells = newRow.querySelectorAll("td[tabindex]");
+        const targetCell = newCells[newCellIndex] || newCells[0];
+        if (targetCell) {
+          targetCell.focus();
+          targetCell.scrollIntoView({ block: "nearest" });
+          // Simpan posisi cell yang difokuskan
+          saveFocusedCell(targetCell);
+        }
+      }
+    }
+  };
+
+  table._keydownHandler = handler;
+  table.addEventListener("keydown", handler);
+}
+
+        // ============================================================
+        // 4. FUNGSI COPY - DENGAN MEMPERTAHANKAN FOKUS
+        // ============================================================
+
+        /**
+         * COPY SEMUA DATA - Tetap di cell aktif
+         */
+        window.copyAllData = function () {
+          if (processedDomains.length === 0) {
+            showFeedback("⚠️ Tidak ada data untuk disalin!", "#ef4444");
+            return;
+          }
+
+          // Simpan cell yang aktif sebelum copy
+          const activeCell = document.activeElement;
+          const isCellFocused =
+            activeCell &&
+            activeCell.tagName === "TD" &&
+            activeCell.hasAttribute("tabindex");
+
+          let combined = [];
+          for (let i = 0; i < processedDomains.length; i++) {
+            combined.push(`${processedDomains[i]}\t${processedNS[i] || ""}`);
+          }
+
+          const textToCopy = combined.join("\n");
+
+          navigator.clipboard
+            .writeText(textToCopy)
+            .then(() => {
+              showFeedback(
+                `✅ ${processedDomains.length} baris data (2 kolom) disalin!`,
+                "#1a73e8",
+              );
+              // Kembalikan fokus ke cell tadi
+              if (isCellFocused) {
+                setTimeout(() => activeCell.focus(), 50);
+              }
+            })
+            .catch(() => {
+              fallbackCopy(textToCopy);
+              if (isCellFocused) {
+                setTimeout(() => activeCell.focus(), 50);
+              }
+            });
+        };
+
+        /**
+         * COPY NS SAJA - Tetap di cell aktif
+         */
+        window.copyNSOnly = function () {
+          if (processedNS.length === 0) {
+            showFeedback("⚠️ Tidak ada data NS untuk disalin!", "#ef4444");
+            return;
+          }
+
+          const activeCell = document.activeElement;
+          const isCellFocused =
+            activeCell &&
+            activeCell.tagName === "TD" &&
+            activeCell.hasAttribute("tabindex");
+
+          const textToCopy = processedNS.join("\n");
+
+          navigator.clipboard
+            .writeText(textToCopy)
+            .then(() => {
+              showFeedback(
+                `✅ ${processedNS.length} baris NS disalin!`,
+                "#8b5cf6",
+              );
+              if (isCellFocused) {
+                setTimeout(() => activeCell.focus(), 50);
+              }
+            })
+            .catch(() => {
+              fallbackCopy(textToCopy);
+              if (isCellFocused) {
+                setTimeout(() => activeCell.focus(), 50);
+              }
+            });
+        };
+
+        /**
+         * COPY SEL AKTIF - Tetap di cell yang sama
+         */
+        window.copyActiveCell = function () {
+          const active = document.activeElement;
+          if (
+            active &&
+            active.tagName === "TD" &&
+            active.hasAttribute("tabindex")
+          ) {
+            const text = active.textContent.trim();
+            if (text) {
+              navigator.clipboard
+                .writeText(text)
+                .then(() => {
+                  showFeedback(`✅ Disalin: "${text}"`, "#10b981");
+                  // Fokus tetap di cell yang sama (sudah aktif)
+                  setTimeout(() => active.focus(), 50);
+                })
+                .catch(() => {
+                  fallbackCopy(text);
+                  setTimeout(() => active.focus(), 50);
+                });
+            } else {
+              showFeedback("⚠️ Sel kosong", "#f59e0b");
+            }
+          } else {
+            showFeedback("👆 Klik sel terlebih dahulu", "#f59e0b");
+          }
+        };
+
+        /**
+         * FALLBACK COPY
+         */
+        function fallbackCopy(text) {
+          const textarea = document.createElement("textarea");
+          textarea.value = text;
+          textarea.style.position = "fixed";
+          textarea.style.left = "-9999px";
+          textarea.style.top = "-9999px";
+          document.body.appendChild(textarea);
+          textarea.select();
+          try {
+            document.execCommand("copy");
+            showFeedback("✅ Disalin (fallback)");
+          } catch (e) {
+            showFeedback("❌ Gagal menyalin", "#ef4444");
+          }
+          document.body.removeChild(textarea);
+        }
+
+        // ============================================================
+        // 5. FUNGSI UTILITY UNTUK FOKUS
+        // ============================================================
+
+        function saveFocusedCell(cell) {
+          if (cell && cell.tagName === "TD") {
+            const row = cell.getAttribute("data-row");
+            const col = cell.getAttribute("data-col");
+            if (row !== null && col !== null) {
+              lastFocusedCell = { row: parseInt(row), col: col };
+            }
+          }
+        }
+
+        // ============================================================
+        // 6. EVENT Ctrl+C - COPY SEL AKTIF & TETAP FOKUS
+        // ============================================================
+        document.addEventListener("copy", function (e) {
+  const active = document.activeElement;
+  if (active && active.tagName === "TD" && active.hasAttribute("tabindex")) {
+    e.preventDefault();
+    const text = active.textContent.trim();
+    if (text) {
+      e.clipboardData.setData("text/plain", text);
+      showFeedback(`✅ Disalin: "${text}"`, "#10b981");
+      setTimeout(() => active.focus(), 50);
+    } else {
+      showFeedback("⚠️ Sel kosong", "#f59e0b");
+    }
+  }
+});
+
+document.addEventListener("keydown", function (e) {
+  if ((e.ctrlKey || e.metaKey) && e.key === "c") {
+    const active = document.activeElement;
+    if (active && active.tagName === "TD" && active.hasAttribute("tabindex")) {
+      e.preventDefault();
+      const text = active.textContent.trim();
+      if (text) {
+        navigator.clipboard.writeText(text).then(() => {
+          showFeedback(`✅ Disalin: "${text}"`, "#10b981");
+          setTimeout(() => active.focus(), 50);
+        }).catch(() => {
+          fallbackCopy(text);
+          setTimeout(() => active.focus(), 50);
+        });
+      } else {
+        showFeedback("⚠️ Sel kosong", "#f59e0b");
+      }
+      return; // ✅ STOP PROPAGASI
+    }
+    // ✅ Jika bukan TD, biarkan default (copy normal)
+  }
+});
+
+        // ============================================================
+        // 7. EVENT LAINNYA
+        // ============================================================
+
+        // Simpan fokus saat klik pada cell
+        document.addEventListener("click", function (e) {
+          if (e.target.tagName === "TD" && e.target.closest(".sheet-table")) {
+            if (e.target.hasAttribute("tabindex")) {
+              e.target.focus();
+              saveFocusedCell(e.target);
+            }
+          }
+        });
+
+        // Simpan fokus saat navigasi keyboard
+        document.addEventListener("focusin", function (e) {
+          if (e.target.tagName === "TD" && e.target.hasAttribute("tabindex")) {
+            saveFocusedCell(e.target);
+          }
+        });
+
+        // ============================================================
+        // 8. UTILITY
+        // ============================================================
+
+        function escapeHtml(text) {
+          return text
+            .replace(/&/g, "&amp;")
+            .replace(/</g, "&lt;")
+            .replace(/>/g, "&gt;")
+            .replace(/"/g, "&quot;")
+            .replace(/'/g, "&#039;");
+        }
+
+        function showFeedback(msg, bg = "#323232") {
+          feedback.textContent = msg;
+          feedback.style.background = bg;
+          feedback.classList.add("show");
+          clearTimeout(feedback._timeout);
+          feedback._timeout = setTimeout(() => {
+            feedback.classList.remove("show");
+          }, 3000);
+        }
+
+        window.clearInput = function () {
+          inputData.value = "";
+          processedDomains = [];
+          processedNS = [];
+          lastFocusedCell = null;
+          renderTable();
+          inputData.focus();
+        };
+
+        // ============================================================
+        // 9. INIT
+        // ============================================================
+
+        inputData.addEventListener("input", processData);
+
+        processData();
+        window.processData = processData;
+      })();
