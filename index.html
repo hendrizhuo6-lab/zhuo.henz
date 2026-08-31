@@ -29,7 +29,7 @@
         <div class="navbar-eyebrow">Pilihan layanan</div>
         <button id="tab-home" class="navbar-button active">◈ FILTER</button>
         <button id="tab-profile" class="navbar-button">◇ FILTER DOMAIN</button>
-        <button id="tab-about" class="navbar-button">◎ ABOUT</button>
+        <button id="tab-about" class="navbar-button">◎ DNS</button>
         <button id="tab-about2" class="navbar-button">◎ ABOUT</button>
       </nav>
 
@@ -120,8 +120,92 @@
 
         <!-- TAB 3: ABOUT -->
         <div id="tab-content-about" class="tabs-content">
-          <h1 class="page-title">◎ Tentang Sistem</h1>
-          <p>Halaman mengenai sistem dan aplikasi.</p>
+          <div class="container">
+      <div class="title-bar">
+        <h1>📊 Pemisah Domain &amp; Nameserver</h1>
+      </div>
+
+      <div class="instructions">
+        📋 <strong>Cara Penggunaan:</strong> Tempelkan data mentah di kolom
+        kiri. Hasil otomatis terpisah di tabel.
+        <br />
+        🔵 <strong>Domain</strong> = warna biru | 🟣
+        <strong>Nameserver</strong> = warna abu-abu (tanpa spasi setelah koma)
+        <br />
+        ⌨️ <strong>Navigasi:</strong> <kbd>Tab</kbd> pindah sel | <kbd>↑</kbd>
+        <kbd>↓</kbd> <kbd>←</kbd> <kbd>→</kbd> navigasi | <kbd>Ctrl+C</kbd> copy
+        sel aktif
+        <br />
+        📋 <strong>Copy:</strong> Klik <strong>"Copy Semua (Tab)"</strong> untuk
+        menyalin semua data (siap paste ke spreadsheet).
+      </div>
+
+      <div class="grid-layout">
+        <div class="column-box">
+          <div class="column-header header-yellow">📝 Input Data Mentah</div>
+          <div class="column-body">
+            <textarea
+              id="inputData"
+              class="input-yellow"
+              placeholder="Tempelkan data di sini..."
+            ></textarea>
+            <div class="btn-group">
+              <button class="btn btn-outline" onclick="clearInput()">
+                🧹 Bersihkan
+              </button>
+              <button class="btn btn-primary" onclick="processData()">
+                🔄 Proses
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <div class="column-box">
+          <div class="column-header header-green">
+            📊 Hasil (Domain &amp; NS)
+            <span class="status-badge" id="rowCount">0</span>
+          </div>
+          <div class="column-body">
+            <div class="output-table-container" id="resultContainer">
+              <table class="sheet-table" id="resultSheet">
+                <thead>
+                  <tr>
+                    <th>#</th>
+                    <th>🌐 Domain</th>
+                    <th>🖥️ Nameserver</th>
+                  </tr>
+                </thead>
+                <tbody id="resultTable">
+                  <tr>
+                    <td class="empty-msg" colspan="3">
+                      Data akan muncul di sini...
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+            <div class="btn-group">
+              <button class="btn btn-copy-all" onclick="copyAllData()">
+                📋 Copy Semua (Tab)
+              </button>
+              <button class="btn btn-copy-cell" onclick="copyActiveCell()">
+                📄 Copy Sel Aktif
+              </button>
+              <button class="btn btn-success" onclick="copyNSOnly()">
+                📋 Copy NS Saja
+              </button>
+            </div>
+            <div class="tab-hint">
+              Klik sel → <kbd>Ctrl+C</kbd> copy isi sel |
+              <kbd>Tab</kbd> navigasi antar sel
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div id="copyFeedback" class="copy-feedback">✅ Disalin ke clipboard!</div>
+
         </div>
 
            <!-- TAB 4: ABOUT -->
