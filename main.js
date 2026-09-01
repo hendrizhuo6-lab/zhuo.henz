@@ -416,370 +416,416 @@
 
   renderResult(null);
 
-  // ==========================================
-  // 6. DNS PARSER (Tab: DNS)
-  // ==========================================
-  const inputData = document.getElementById("inputData");
-  const resultTable = document.getElementById("resultTable");
-  const rowCount = document.getElementById("rowCount");
-  const feedback = document.getElementById("copyFeedback");
+// ==========================================
+// 6. DNS PARSER (Tab: DNS) - OPTIMIZED
+// ==========================================
+const inputData = document.getElementById("inputData");
+const resultTable = document.getElementById("resultTable");
+const rowCount = document.getElementById("rowCount");
+const feedback = document.getElementById("copyFeedback");
 
-  let processedDomains = [];
-  let processedNS = [];
-  let lastFocusedCell = null;
+let processedDomains = [];
+let processedNS = [];
+let lastFocusedCell = null;
+let isProcessing = false;
+let renderTimeout = null;
 
-  function processData() {
-    const text = inputData.value;
-    const lines = text
-      .split("\n")
-      .map((l) => l.trim())
-      .filter((l) => l !== "");
+// ==========================================
+// 6a. PROCESS DATA (Debounced)
+// ==========================================
+function processData() {
+  if (isProcessing) return;
+  isProcessing = true;
 
-    processedDomains = [];
-    processedNS = [];
-
-    let currentDomain = "";
-    let currentNS = [];
-
-    lines.forEach((line) => {
-      const isNS =
-        line.includes(".ns.") ||
-        line.includes("ns.cloudflare") ||
-        (line.split(".").length > 2 &&
-          (line.toLowerCase().includes("ns") ||
-            line.toLowerCase().includes("cloudflare")));
-
-      const isDomain =
-        !isNS &&
-        (line.endsWith(".com") ||
-          line.endsWith(".net") ||
-          line.endsWith(".org") ||
-          line.endsWith(".id") ||
-          line.endsWith(".co.id") ||
-          line.endsWith(".xyz") ||
-          line.endsWith(".info") ||
-          line.endsWith(".biz") ||
-          (line.includes(".") && line.split(".").length === 2));
-
-      if (isDomain) {
-        if (currentDomain) {
-          processedDomains.push(currentDomain);
-          processedNS.push(currentNS.join(","));
-        }
-        currentDomain = line;
-        currentNS = [];
-      } else if (isNS && currentDomain !== "") {
-        currentNS.push(line);
-      } else if (!isDomain && !isNS && currentDomain !== "") {
-        if (line !== currentDomain) {
-          currentNS.push(line);
-        }
-      }
-    });
-
-    if (currentDomain) {
-      processedDomains.push(currentDomain);
-      processedNS.push(currentNS.join(","));
-    }
-
-    renderTable();
+  // Clear previous timeout
+  if (renderTimeout) {
+    clearTimeout(renderTimeout);
+    renderTimeout = null;
   }
 
-  function renderTable() {
-    const count = processedDomains.length;
-    rowCount.textContent = count;
-
-    if (count === 0) {
-      resultTable.innerHTML = `<tr><td class="empty-msg" colspan="3">Data akan muncul di sini...</td></tr>`;
-      lastFocusedCell = null;
-      return;
-    }
-
-    let html = "";
-    for (let i = 0; i < count; i++) {
-      const rowNum = i + 1;
-      const domain = escapeHtml(processedDomains[i] || "");
-      const ns = escapeHtml(processedNS[i] || "");
-      html += `<tr>
-        <td class="row-number">${rowNum}</td>
-        <td class="domain-cell domain-highlight" tabindex="0" role="gridcell" data-value="${domain}" data-row="${i}" data-col="domain">${domain}</td>
-        <td class="ns-cell ns-highlight" tabindex="0" role="gridcell" data-value="${ns}" data-row="${i}" data-col="ns">${ns}</td>
-      </tr>`;
-    }
-    resultTable.innerHTML = html;
-
-    attachKeyboardNav("resultSheet");
-
-    if (lastFocusedCell) {
-      const cell = document.querySelector(
-        `#resultSheet td[data-row="${lastFocusedCell.row}"][data-col="${lastFocusedCell.col}"]`,
-      );
-      if (cell) {
-        setTimeout(() => cell.focus(), 50);
-        return;
-      }
-    }
-
-    const firstCell = document.querySelector("#resultSheet td[tabindex]");
-    if (firstCell) setTimeout(() => firstCell.focus(), 50);
-  }
-
-  function attachKeyboardNav(tableId) {
-    const table = document.getElementById(tableId);
-    if (!table) return;
-
-    if (table._keydownHandler) {
-      table.removeEventListener("keydown", table._keydownHandler);
-    }
-
-    const handler = function (e) {
-      const target = e.target;
-      if (target.tagName !== "TD" || !target.hasAttribute("tabindex")) return;
-
-      const row = target.parentElement;
-      const tbody = row.parentElement;
-      const rows = Array.from(tbody.querySelectorAll("tr"));
-      const currentRowIndex = rows.indexOf(row);
-
-      const cells = Array.from(row.querySelectorAll("td[tabindex]"));
-      const currentCellIndex = cells.indexOf(target);
-
-      let newRowIndex = currentRowIndex;
-      let newCellIndex = currentCellIndex;
-
-      switch (e.key) {
-        case "Enter":
-        case "ArrowDown":
-          e.preventDefault();
-          if (e.key === "Enter" && e.shiftKey) {
-            newRowIndex = Math.max(currentRowIndex - 1, 0);
-          } else {
-            newRowIndex = Math.min(currentRowIndex + 1, rows.length - 1);
-          }
-          break;
-        case "ArrowUp":
-          e.preventDefault();
-          newRowIndex = Math.max(currentRowIndex - 1, 0);
-          break;
-        case "ArrowRight":
-          e.preventDefault();
-          newCellIndex = Math.min(currentCellIndex + 1, cells.length - 1);
-          break;
-        case "ArrowLeft":
-          e.preventDefault();
-          newCellIndex = Math.max(currentCellIndex - 1, 0);
-          break;
-        case "Tab":
-          return;
-        default:
-          return;
-      }
-
-      if (
-        newRowIndex !== currentRowIndex ||
-        newCellIndex !== currentCellIndex
-      ) {
-        const newRow = rows[newRowIndex];
-        if (newRow) {
-          const newCells = newRow.querySelectorAll("td[tabindex]");
-          const targetCell = newCells[newCellIndex] || newCells[0];
-          if (targetCell) {
-            targetCell.focus();
-            targetCell.scrollIntoView({ block: "nearest" });
-            saveFocusedCell(targetCell);
-          }
-        }
-      }
-    };
-
-    table._keydownHandler = handler;
-    table.addEventListener("keydown", handler);
-  }
-
-  function saveFocusedCell(cell) {
-    if (cell && cell.tagName === "TD") {
-      const row = cell.getAttribute("data-row");
-      const col = cell.getAttribute("data-col");
-      if (row !== null && col !== null) {
-        lastFocusedCell = { row: parseInt(row), col: col };
-      }
-    }
-  }
-
-  function showFeedback(msg, bg = "#323232") {
-    feedback.textContent = msg;
-    feedback.style.background = bg;
-    feedback.classList.add("show");
-    clearTimeout(feedback._timeout);
-    feedback._timeout = setTimeout(() => {
-      feedback.classList.remove("show");
-    }, 3000);
-  }
-
-  function fallbackCopy(text) {
-    const textarea = document.createElement("textarea");
-    textarea.value = text;
-    textarea.style.position = "fixed";
-    textarea.style.left = "-9999px";
-    textarea.style.top = "-9999px";
-    document.body.appendChild(textarea);
-    textarea.select();
+  // Debounce: wait 300ms after last input before processing
+  renderTimeout = setTimeout(() => {
     try {
-      document.execCommand("copy");
-      showFeedback("✅ Disalin (fallback)");
-    } catch (e) {
-      showFeedback("❌ Gagal menyalin", "#ef4444");
-    }
-    document.body.removeChild(textarea);
-  }
+      const text = inputData.value;
+      const lines = text
+        .split("\n")
+        .map((l) => l.trim())
+        .filter((l) => l !== "");
 
-  // ==========================================
-  // 7. COPY FUNCTIONS
-  // ==========================================
-  window.copyAllData = function () {
-    if (processedDomains.length === 0) {
-      showFeedback("⚠️ Tidak ada data untuk disalin!", "#ef4444");
-      return;
-    }
+      const newDomains = [];
+      const newNS = [];
+      let currentDomain = "";
+      let currentNS = [];
 
-    const activeCell = document.activeElement;
-    const isCellFocused =
-      activeCell &&
-      activeCell.tagName === "TD" &&
-      activeCell.hasAttribute("tabindex");
+      // Single pass parsing
+      for (let i = 0; i < lines.length; i++) {
+        const line = lines[i];
+        
+        const isNS = line.includes(".ns.") || 
+                     line.includes("ns.cloudflare") ||
+                     (line.split(".").length > 2 && 
+                      (line.toLowerCase().includes("ns") || 
+                       line.toLowerCase().includes("cloudflare")));
 
-    let combined = [];
-    for (let i = 0; i < processedDomains.length; i++) {
-      combined.push(`${processedDomains[i]}\t${processedNS[i] || ""}`);
-    }
+        const isDomain = !isNS && 
+                        (line.endsWith(".com") || line.endsWith(".net") || 
+                         line.endsWith(".org") || line.endsWith(".id") || 
+                         line.endsWith(".co.id") || line.endsWith(".xyz") || 
+                         line.endsWith(".info") || line.endsWith(".biz") ||
+                         (line.includes(".") && line.split(".").length === 2));
 
-    const textToCopy = combined.join("\n");
-
-    navigator.clipboard
-      .writeText(textToCopy)
-      .then(() => {
-        showFeedback(
-          `✅ ${processedDomains.length} baris data (2 kolom) disalin!`,
-          "#1a73e8",
-        );
-        if (isCellFocused) {
-          setTimeout(() => activeCell.focus(), 50);
+        if (isDomain) {
+          if (currentDomain) {
+            newDomains.push(currentDomain);
+            newNS.push(currentNS.join(","));
+          }
+          currentDomain = line;
+          currentNS = [];
+        } else if (isNS && currentDomain !== "") {
+          currentNS.push(line);
+        } else if (!isDomain && !isNS && currentDomain !== "") {
+          if (line !== currentDomain) {
+            currentNS.push(line);
+          }
         }
-      })
-      .catch(() => {
-        fallbackCopy(textToCopy);
-        if (isCellFocused) {
-          setTimeout(() => activeCell.focus(), 50);
-        }
-      });
-  };
-
-  window.copyNSOnly = function () {
-    if (processedNS.length === 0) {
-      showFeedback("⚠️ Tidak ada data NS untuk disalin!", "#ef4444");
-      return;
-    }
-
-    const activeCell = document.activeElement;
-    const isCellFocused =
-      activeCell &&
-      activeCell.tagName === "TD" &&
-      activeCell.hasAttribute("tabindex");
-
-    const textToCopy = processedNS.join("\n");
-
-    navigator.clipboard
-      .writeText(textToCopy)
-      .then(() => {
-        showFeedback(`✅ ${processedNS.length} baris NS disalin!`, "#8b5cf6");
-        if (isCellFocused) {
-          setTimeout(() => activeCell.focus(), 50);
-        }
-      })
-      .catch(() => {
-        fallbackCopy(textToCopy);
-        if (isCellFocused) {
-          setTimeout(() => activeCell.focus(), 50);
-        }
-      });
-  };
-
-  window.copyActiveCell = function () {
-    const active = document.activeElement;
-    if (active && active.tagName === "TD" && active.hasAttribute("tabindex")) {
-      const text = active.textContent.trim();
-      if (text) {
-        navigator.clipboard
-          .writeText(text)
-          .then(() => {
-            showFeedback(`✅ Disalin: "${text}"`, "#10b981");
-            setTimeout(() => active.focus(), 50);
-          })
-          .catch(() => {
-            fallbackCopy(text);
-            setTimeout(() => active.focus(), 50);
-          });
-      } else {
-        showFeedback("⚠️ Sel kosong", "#f59e0b");
       }
-    } else {
-      showFeedback("👆 Klik sel terlebih dahulu", "#f59e0b");
-    }
-  };
 
-  window.clearInput = function () {
-    inputData.value = "";
-    processedDomains = [];
-    processedNS = [];
+      if (currentDomain) {
+        newDomains.push(currentDomain);
+        newNS.push(currentNS.join(","));
+      }
+
+      // Only update if data actually changed
+      const domainsChanged = JSON.stringify(processedDomains) !== JSON.stringify(newDomains);
+      const nsChanged = JSON.stringify(processedNS) !== JSON.stringify(newNS);
+
+      if (domainsChanged || nsChanged) {
+        processedDomains = newDomains;
+        processedNS = newNS;
+        renderTable();
+      }
+    } catch (error) {
+      console.error("Error processing data:", error);
+    } finally {
+      isProcessing = false;
+      renderTimeout = null;
+    }
+  }, 300);
+}
+
+// ==========================================
+// 6b. RENDER TABLE (Optimized with Document Fragment)
+// ==========================================
+function renderTable() {
+  const count = processedDomains.length;
+  rowCount.textContent = count;
+
+  if (count === 0) {
+    resultTable.innerHTML = `<tr><td class="empty-msg" colspan="3">Data akan muncul di sini...</td></tr>`;
     lastFocusedCell = null;
-    renderTable();
-    inputData.focus();
-  };
-
-  // ==========================================
-  // 8. EVENT LISTENERS
-  // ==========================================
-
-  // Ctrl+C untuk copy sel aktif
-  document.addEventListener("copy", function (e) {
-    const active = document.activeElement;
-    if (active && active.tagName === "TD" && active.hasAttribute("tabindex")) {
-      e.preventDefault();
-      const text = active.textContent.trim();
-      if (text) {
-        e.clipboardData.setData("text/plain", text);
-        showFeedback(`✅ Disalin: "${text}"`, "#10b981");
-        setTimeout(() => active.focus(), 50);
-      } else {
-        showFeedback("⚠️ Sel kosong", "#f59e0b");
-      }
-    }
-  });
-
-  // Simpan fokus saat klik pada cell
-  document.addEventListener("click", function (e) {
-    if (e.target.tagName === "TD" && e.target.closest(".sheet-table")) {
-      if (e.target.hasAttribute("tabindex")) {
-        e.target.focus();
-        saveFocusedCell(e.target);
-      }
-    }
-  });
-
-  // Simpan fokus saat navigasi keyboard
-  document.addEventListener("focusin", function (e) {
-    if (e.target.tagName === "TD" && e.target.hasAttribute("tabindex")) {
-      saveFocusedCell(e.target);
-    }
-  });
-
-  // ==========================================
-  // 9. INIT
-  // ==========================================
-  if (inputData) {
-    inputData.addEventListener("input", processData);
-    processData();
+    return;
   }
 
-  window.processData = processData;
-})();
+  // Use DocumentFragment for batch DOM updates
+  const fragment = document.createDocumentFragment();
+  
+  for (let i = 0; i < count; i++) {
+    const rowNum = i + 1;
+    const domain = escapeHtml(processedDomains[i] || "");
+    const ns = escapeHtml(processedNS[i] || "");
+    
+    const tr = document.createElement("tr");
+    
+    // Row number cell
+    const tdNum = document.createElement("td");
+    tdNum.className = "row-number";
+    tdNum.textContent = rowNum;
+    tr.appendChild(tdNum);
+    
+    // Domain cell
+    const tdDomain = document.createElement("td");
+    tdDomain.className = "domain-cell domain-highlight";
+    tdDomain.setAttribute("tabindex", "0");
+    tdDomain.setAttribute("role", "gridcell");
+    tdDomain.dataset.value = domain;
+    tdDomain.dataset.row = i;
+    tdDomain.dataset.col = "domain";
+    tdDomain.textContent = domain;
+    tr.appendChild(tdDomain);
+    
+    // NS cell
+    const tdNs = document.createElement("td");
+    tdNs.className = "ns-cell ns-highlight";
+    tdNs.setAttribute("tabindex", "0");
+    tdNs.setAttribute("role", "gridcell");
+    tdNs.dataset.value = ns;
+    tdNs.dataset.row = i;
+    tdNs.dataset.col = "ns";
+    tdNs.textContent = ns;
+    tr.appendChild(tdNs);
+    
+    fragment.appendChild(tr);
+  }
+
+  // Batch update DOM
+  resultTable.innerHTML = "";
+  resultTable.appendChild(fragment);
+
+  // Restore focus if possible
+  if (lastFocusedCell) {
+    const cell = resultTable.querySelector(
+      `td[data-row="${lastFocusedCell.row}"][data-col="${lastFocusedCell.col}"]`
+    );
+    if (cell) {
+      setTimeout(() => cell.focus(), 50);
+      return;
+    }
+  }
+
+  // Focus first cell
+  const firstCell = resultTable.querySelector("td[tabindex]");
+  if (firstCell) setTimeout(() => firstCell.focus(), 50);
+}
+
+// ==========================================
+// 6c. KEYBOARD NAVIGATION (Optimized)
+// ==========================================
+let keyboardHandler = null;
+
+function attachKeyboardNav() {
+  // Remove old handler if exists
+  if (keyboardHandler) {
+    document.removeEventListener("keydown", keyboardHandler);
+    keyboardHandler = null;
+  }
+
+  keyboardHandler = function(e) {
+    const target = e.target;
+    if (!target || target.tagName !== "TD" || !target.hasAttribute("tabindex")) return;
+    
+    // Only handle arrow keys and Enter
+    const navigationKeys = ["ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight", "Enter"];
+    if (!navigationKeys.includes(e.key)) return;
+    
+    e.preventDefault();
+    
+    const row = target.parentElement;
+    const tbody = row.parentElement;
+    const rows = Array.from(tbody.children);
+    const currentRowIndex = rows.indexOf(row);
+    
+    const cells = Array.from(row.querySelectorAll("td[tabindex]"));
+    const currentCellIndex = cells.indexOf(target);
+    
+    let newRowIndex = currentRowIndex;
+    let newCellIndex = currentCellIndex;
+    
+    switch (e.key) {
+      case "Enter":
+        // Enter moves to next row, same column
+        if (e.shiftKey) {
+          newRowIndex = Math.max(currentRowIndex - 1, 0);
+        } else {
+          newRowIndex = Math.min(currentRowIndex + 1, rows.length - 1);
+        }
+        break;
+      case "ArrowDown":
+        newRowIndex = Math.min(currentRowIndex + 1, rows.length - 1);
+        break;
+      case "ArrowUp":
+        newRowIndex = Math.max(currentRowIndex - 1, 0);
+        break;
+      case "ArrowRight":
+        newCellIndex = Math.min(currentCellIndex + 1, cells.length - 1);
+        break;
+      case "ArrowLeft":
+        newCellIndex = Math.max(currentCellIndex - 1, 0);
+        break;
+    }
+    
+    if (newRowIndex !== currentRowIndex || newCellIndex !== currentCellIndex) {
+      const newRow = rows[newRowIndex];
+      if (newRow) {
+        const newCells = newRow.querySelectorAll("td[tabindex]");
+        const targetCell = newCells[newCellIndex] || newCells[0];
+        if (targetCell) {
+          targetCell.focus();
+          saveFocusedCell(targetCell);
+        }
+      }
+    }
+  };
+  
+  document.addEventListener("keydown", keyboardHandler);
+}
+
+// ==========================================
+// 6d. HELPER FUNCTIONS
+// ==========================================
+function escapeHtml(str) {
+  return String(str)
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#039;");
+}
+
+function saveFocusedCell(cell) {
+  if (cell && cell.tagName === "TD") {
+    const row = cell.getAttribute("data-row");
+    const col = cell.getAttribute("data-col");
+    if (row !== null && col !== null) {
+      lastFocusedCell = { row: parseInt(row), col: col };
+    }
+  }
+}
+
+function showFeedback(msg, bg = "#323232") {
+  feedback.textContent = msg;
+  feedback.style.background = bg;
+  feedback.classList.add("show");
+  clearTimeout(feedback._timeout);
+  feedback._timeout = setTimeout(() => {
+    feedback.classList.remove("show");
+  }, 3000);
+}
+
+function fallbackCopy(text) {
+  const textarea = document.createElement("textarea");
+  textarea.value = text;
+  textarea.style.position = "fixed";
+  textarea.style.left = "-9999px";
+  textarea.style.top = "-9999px";
+  document.body.appendChild(textarea);
+  textarea.select();
+  try {
+    document.execCommand("copy");
+    showFeedback("✅ Disalin (fallback)");
+  } catch (e) {
+    showFeedback("❌ Gagal menyalin", "#ef4444");
+  }
+  document.body.removeChild(textarea);
+}
+
+// ==========================================
+// 6e. COPY FUNCTIONS
+// ==========================================
+window.copyAllData = function () {
+  if (processedDomains.length === 0) {
+    showFeedback("⚠️ Tidak ada data untuk disalin!", "#ef4444");
+    return;
+  }
+
+  const combined = processedDomains.map((d, i) => `${d}\t${processedNS[i] || ""}`);
+  const textToCopy = combined.join("\n");
+
+  navigator.clipboard.writeText(textToCopy)
+    .then(() => {
+      showFeedback(`✅ ${processedDomains.length} baris data disalin!`, "#1a73e8");
+    })
+    .catch(() => {
+      fallbackCopy(textToCopy);
+    });
+};
+
+window.copyNSOnly = function () {
+  if (processedNS.length === 0) {
+    showFeedback("⚠️ Tidak ada data NS untuk disalin!", "#ef4444");
+    return;
+  }
+
+  const textToCopy = processedNS.join("\n");
+
+  navigator.clipboard.writeText(textToCopy)
+    .then(() => {
+      showFeedback(`✅ ${processedNS.length} baris NS disalin!`, "#8b5cf6");
+    })
+    .catch(() => {
+      fallbackCopy(textToCopy);
+    });
+};
+
+window.copyActiveCell = function () {
+  const active = document.activeElement;
+  if (active && active.tagName === "TD" && active.hasAttribute("tabindex")) {
+    const text = active.textContent.trim();
+    if (text) {
+      navigator.clipboard.writeText(text)
+        .then(() => {
+          showFeedback(`✅ Disalin: "${text}"`, "#10b981");
+          setTimeout(() => active.focus(), 50);
+        })
+        .catch(() => {
+          fallbackCopy(text);
+          setTimeout(() => active.focus(), 50);
+        });
+    } else {
+      showFeedback("⚠️ Sel kosong", "#f59e0b");
+    }
+  } else {
+    showFeedback("👆 Klik sel terlebih dahulu", "#f59e0b");
+  }
+};
+
+window.clearInput = function () {
+  inputData.value = "";
+  processedDomains = [];
+  processedNS = [];
+  lastFocusedCell = null;
+  renderTable();
+  inputData.focus();
+};
+
+// ==========================================
+// 6f. EVENT LISTENERS (Optimized)
+// ==========================================
+
+// Single event listener for clipboard copy
+document.addEventListener("copy", function (e) {
+  const active = document.activeElement;
+  if (active && active.tagName === "TD" && active.hasAttribute("tabindex")) {
+    e.preventDefault();
+    const text = active.textContent.trim();
+    if (text) {
+      e.clipboardData.setData("text/plain", text);
+      showFeedback(`✅ Disalin: "${text}"`, "#10b981");
+      setTimeout(() => active.focus(), 50);
+    } else {
+      showFeedback("⚠️ Sel kosong", "#f59e0b");
+    }
+  }
+});
+
+// Save focus on click
+document.addEventListener("click", function (e) {
+  const target = e.target;
+  if (target.tagName === "TD" && target.closest(".sheet-table") && target.hasAttribute("tabindex")) {
+    target.focus();
+    saveFocusedCell(target);
+  }
+});
+
+// Save focus on focusin
+document.addEventListener("focusin", function (e) {
+  const target = e.target;
+  if (target.tagName === "TD" && target.hasAttribute("tabindex")) {
+    saveFocusedCell(target);
+  }
+});
+
+// ==========================================
+// 6g. INIT
+// ==========================================
+if (inputData) {
+  // Use input event with debouncing (handled in processData)
+  inputData.addEventListener("input", processData);
+  // Initial process
+  processData();
+}
+
+// Attach keyboard navigation
+attachKeyboardNav();
+
+// Expose processData globally
+window.processData = processData;
