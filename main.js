@@ -326,13 +326,6 @@
   // ==========================================
   // 5. RENDER HASIL
   // ==========================================
-  function escapeHtml(str) {
-    return String(str)
-      .replace(/&/g, "&amp;")
-      .replace(/</g, "&lt;")
-      .replace(/>/g, "&gt;");
-  }
-
   function renderResult(result) {
     const statusDiv = document.getElementById("statusContainer");
     const reportDiv = document.getElementById("reportContainer");
