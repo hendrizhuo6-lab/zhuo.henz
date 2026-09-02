@@ -829,3 +829,4 @@ attachKeyboardNav();
 
 // Expose processData globally
 window.processData = processData;
+})();
