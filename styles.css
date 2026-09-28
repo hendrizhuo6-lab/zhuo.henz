@@ -369,6 +369,27 @@ body {
 }
 
 /* ==========================================================================
+   PERBAIKAN DESAIN: Pemisah Visual Input Data Lama & Baru
+   ========================================================================== */
+#tab-content-home .checker-box.box-lama {
+  border-top: 3px solid var(--accent-amber);
+  background: linear-gradient(180deg, rgba(240, 169, 64, 0.03) 0%, var(--bg-secondary) 100%);
+}
+
+#tab-content-home .checker-box.box-lama label {
+  color: var(--accent-amber);
+}
+
+#tab-content-home .checker-box.box-baru {
+  border-top: 3px solid var(--accent-teal);
+  background: linear-gradient(180deg, rgba(45, 212, 191, 0.03) 0%, var(--bg-secondary) 100%);
+}
+
+#tab-content-home .checker-box.box-baru label {
+  color: var(--accent-teal);
+}
+
+/* ==========================================================================
    BUTTONS
    ========================================================================== */
 .button-group {
@@ -1481,4 +1502,229 @@ body {
   #tab-content-dns .sheet-table td {
     border: 1px solid #333 !important;
   }
+}
+
+/* ==========================================
+   CSS untuk DNS Parser - Dual Result Tables
+   ========================================== */
+
+.dns-parser-container {
+  font-family: inherit;
+  color: #333;
+}
+
+/* Kotak Grid untuk Membagi Dua Hasil */
+.dns-results-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px;
+  margin-top: 20px;
+}
+
+@media (max-width: 768px) {
+  .dns-results-grid {
+    grid-template-columns: 1fr; /* Responsif untuk layar kecil / mobile */
+  }
+}
+
+/* Card Kotak Hasil Hijau (DNS Sama / Massal) */
+.dns-card-bulk {
+  border: 1px solid #10B981;
+  padding: 15px;
+  border-radius: 8px;
+  background-color: #F0FDF4;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+}
+
+.dns-card-bulk h3 {
+  color: #047857;
+  margin-top: 0;
+  margin-bottom: 5px;
+  font-size: 16px;
+}
+
+/* Card Kotak Hasil Biru (DNS Standar / Tunggal) */
+.dns-card-normal {
+  border: 1px solid #3B82F6;
+  padding: 15px;
+  border-radius: 8px;
+  background-color: #EFF6FF;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+}
+
+.dns-card-normal h3 {
+  color: #1D4ED8;
+  margin-top: 0;
+  margin-bottom: 5px;
+  font-size: 16px;
+}
+
+/* Deskripsi Keterangan */
+.dns-card-desc {
+  font-size: 12px;
+  color: #6B7280;
+  margin-bottom: 10px;
+}
+
+/* Area Scroll Tabel Hasil */
+.dns-table-scroll {
+  max-height: 250px;
+  overflow-y: auto;
+  background: white;
+  padding: 10px;
+  border: 1px solid #D1D5DB;
+  border-radius: 6px;
+}
+
+/* Gaya Tabel Di dalam Kotak Hasil */
+.dns-result-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+
+.dns-result-table td {
+  border-bottom: 1px solid #E5E7EB;
+  padding: 6px 8px;
+}
+
+.dns-result-table tr:last-child td {
+  border-bottom: none;
+}
+
+/* Tombol Salin (Copy Button) */
+.dns-copy-btn-bulk {
+  margin-top: 12px;
+  padding: 8px 16px;
+  background-color: #10B981;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-weight: bold;
+  font-size: 13px;
+  transition: background-color 0.2s;
+}
+
+.dns-copy-btn-bulk:hover {
+  background-color: #059669;
+}
+
+.dns-copy-btn-normal {
+  margin-top: 12px;
+  padding: 8px 16px;
+  background-color: #3B82F6;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-weight: bold;
+  font-size: 13px;
+  transition: background-color 0.2s;
+}
+
+.dns-copy-btn-normal:hover {
+  background-color: #2563EB;
+}
+
+/* ==========================================
+   CSS Styling untuk Kotak Massal Dinamis Tab 3
+   ========================================== */
+
+/* Wrapper Utama untuk Card Massal */
+.dynamic-bulk-card {
+  border: 1px solid var(--border-primary);
+  border-radius: var(--radius-md);
+  padding: 16px;
+  background: linear-gradient(180deg, rgba(52, 211, 153, 0.04) 0%, var(--bg-card) 100%);
+  box-shadow: var(--shadow-card);
+  margin-bottom: 16px;
+  transition: border-color var(--transition-speed), box-shadow var(--transition-speed);
+}
+
+.dynamic-bulk-card:hover {
+  border-color: var(--accent-green);
+  box-shadow: var(--shadow-card-lg);
+}
+
+/* Header NS pada Card Massal */
+.dynamic-bulk-header {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--accent-teal);
+  margin-bottom: 10px;
+  word-break: break-all;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+/* Area Daftar Domain di dalam Card */
+.dynamic-bulk-domains {
+  background: var(--bg-input);
+  padding: 10px 12px;
+  border: 1px solid var(--border-primary);
+  border-radius: var(--radius-sm);
+  max-height: 160px;
+  overflow-y: auto;
+  font-family: var(--font-mono);
+  font-size: 12.5px;
+  color: var(--text-primary);
+  margin-bottom: 12px;
+  line-height: 1.6;
+}
+
+.dynamic-bulk-domains div {
+  padding: 2px 0;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.02);
+}
+
+.dynamic-bulk-domains div:last-child {
+  border-bottom: none;
+}
+
+/* Grup Tombol Aksi di Card Massal */
+.dynamic-bulk-actions {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+/* Tombol Khusus Card Massal */
+.btn-bulk-action {
+  padding: 7px 14px;
+  border-radius: var(--radius-sm);
+  font-family: var(--font-body);
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  border: 1px solid transparent;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  transition: all var(--transition-speed);
+}
+
+.btn-bulk-copy-all {
+  background: var(--accent-green-dim);
+  color: var(--accent-green);
+  border-color: rgba(52, 211, 153, 0.25);
+}
+
+.btn-bulk-copy-all:hover {
+  background: rgba(52, 211, 153, 0.2);
+  border-color: var(--accent-green);
+}
+
+.btn-bulk-copy-ns {
+  background: var(--bg-tertiary);
+  color: var(--text-secondary);
+  border-color: var(--border-primary);
+}
+
+.btn-bulk-copy-ns:hover {
+  background: var(--bg-hover);
+  color: var(--text-primary);
+  border-color: var(--border-secondary);
 }

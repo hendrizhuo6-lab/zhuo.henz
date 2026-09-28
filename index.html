@@ -92,21 +92,21 @@
           <section id="tab-checker">
             <h2 class="page-title">🔍 Cek Pergantian Domain</h2>
 
-            <div class="checker-grid">
-              <div class="checker-box">
-                <label for="oldData">📦 Data Lama</label>
+<div class="checker-grid">
+              <div class="checker-box box-lama">
+                <label for="oldData">📦 1. Data Lama (Asal)</label>
                 <textarea
                   id="oldData"
-                  placeholder="Masukkan data lama di sini..."
+                  placeholder="Tempel KHUSUS data domain lama di sini..."
                   aria-describedby="oldDataHelp"
                 ></textarea>
                 <span id="oldDataHelp" class="sr-only">Tempelkan data domain lama dengan format [BRAND] diikuti daftar domain</span>
               </div>
-              <div class="checker-box">
-                <label for="newData">📦 Data Baru</label>
+              <div class="checker-box box-baru">
+                <label for="newData">📦 2. Data Baru (Pengganti)</label>
                 <textarea
                   id="newData"
-                  placeholder="Masukkan data baru di sini..."
+                  placeholder="Tempel KHUSUS data domain baru di sini..."
                   aria-describedby="newDataHelp"
                 ></textarea>
                 <span id="newDataHelp" class="sr-only">Tempelkan data domain baru dengan format [BRAND] diikuti daftar domain</span>
@@ -161,7 +161,7 @@
           <h1 class="page-title">🗂 Pengelompokan Domain</h1>
           <div class="profile-container">
             <div class="box">
-              <h3 for="domainInput">Paste Domain di Sini:</h3>
+              <label for="domainInput" class="box-label-title">Paste Domain di Sini:</label>
               <textarea
                 id="domainInput"
                 placeholder="Paste daftar domain..."
@@ -187,7 +187,7 @@
           </div>
         </div>
 
-        <!-- TAB 3: DNS -->
+<!-- TAB 3: DNS -->
         <div 
           id="tab-content-dns" 
           class="tabs-content" 
@@ -213,19 +213,20 @@
                   ></textarea>
                   <span id="inputDataHelp" class="sr-only">Tempelkan data mentah domain dan nameserver</span>
                   <div class="btn-group">
-                    <button class="btn btn-outline" onclick="clearInput()" aria-label="Bersihkan input">
+                    <button class="btn btn-outline" id="clearInputBtn" aria-label="Bersihkan input">
                       🧹 Bersihkan
                     </button>
-                    <button class="btn btn-primary" onclick="processData()" aria-label="Proses data">
+                    <button class="btn btn-primary" id="processDataBtn" aria-label="Proses data">
                       🔄 Proses
                     </button>
                   </div>
                 </div>
               </div>
 
+              <!-- Tabel Mode Lama: Berisi domain sisa yang tidak masuk massal -->
               <div class="column-box">
                 <div class="column-header header-green">
-                  📊 Hasil (Domain &amp; NS)
+                  📊 Hasil Domain Lainnya (Tunggal)
                   <span class="status-badge" id="rowCount" aria-label="Jumlah baris">0</span>
                 </div>
                 <div class="column-body">
@@ -248,23 +249,28 @@
                     </table>
                   </div>
                   <div class="btn-group">
-                    <button class="btn btn-copy-all" onclick="copyAllData()" aria-label="Copy semua data (tab separated)">
+                    <button class="btn btn-copy-all" id="copyAllBtn" aria-label="Copy semua data (tab separated)">
                       📋 Copy Semua (Tab)
                     </button>
-                    <button class="btn btn-copy-cell" onclick="copyActiveCell()" aria-label="Copy sel yang aktif">
+                    <button class="btn btn-copy-cell" id="copyCellBtn" aria-label="Copy sel yang aktif">
                       📄 Copy Sel Aktif
                     </button>
-                    <button class="btn btn-success" onclick="copyNSOnly()" aria-label="Copy nameserver saja">
+                    <button class="btn btn-success" id="copyNsBtn" aria-label="Copy nameserver saja">
                       📋 Copy NS Saja
                     </button>
-                  </div>
-                  <div class="tab-hint">
-                    Klik sel → <kbd>Ctrl+C</kbd> copy isi sel |
-                    <kbd>Tab</kbd> navigasi antar sel
                   </div>
                 </div>
               </div>
             </div>
+
+            <!-- Kotak Hasil Massal Dinamis (Otomatis bertambah sesuai grup DNS yang sama) -->
+            <div style="padding: 20px; border-top: 1px solid var(--border-primary); margin-top: 20px;">
+              <h3 style="margin-bottom: 15px; font-size: 15px; color: var(--text-primary);">⚡ Kelompok DNS Sama (Massal)</h3>
+              <div id="bulkResultContainer">
+                <span style="color: #9CA3AF; font-style: italic;">Belum ada data massal...</span>
+              </div>
+            </div>
+
           </div>
 
           <div id="copyFeedback" class="copy-feedback" role="alert" aria-live="assertive">
