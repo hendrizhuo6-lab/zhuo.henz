@@ -1820,3 +1820,36 @@ body {
     font-size: 14px;
     font-family: var(--font-mono);
 }
+
+/* ==========================================
+   PERBAIKAN LAYOUT UTAMA (FIX SCROLL & NAVBAR)
+   ========================================== */
+
+/* Pastikan struktur utama fleksibel tanpa merusak elemen lain */
+.main-layout {
+    display: flex;
+    height: calc(100vh - 71px); /* Menyesuaikan tinggi layar dikurangi header */
+    overflow: hidden;
+}
+
+/* Sidebar navigasi tetap diam di kiri */
+.navbar {
+    flex-shrink: 0;
+    height: 100%;
+    overflow-y: auto;
+}
+
+/* Area konten di sebelah kanan memiliki scroll sendiri */
+.content {
+    flex-grow: 1;
+    height: 100%;
+    overflow-y: auto;
+    padding: 30px 34px;
+    background: transparent;
+}
+
+html, body {
+    height: 100%;
+    margin: 0;
+    overflow: hidden;
+}

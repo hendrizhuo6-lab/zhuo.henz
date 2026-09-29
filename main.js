@@ -26,7 +26,7 @@
     "tab-help": document.getElementById("tab-content-help"),
   };
 
-  function switchTab(activeBtn) {
+ function switchTab(activeBtn) {
     if (!activeBtn) return;
     const targetId = activeBtn.id;
 
@@ -37,9 +37,17 @@
 
     activeBtn.classList.add("active");
     const targetContent = tabContents[targetId];
-    if (targetContent) targetContent.classList.add("active");
+    if (targetContent) {
+      targetContent.classList.add("active");
+      
+      // TAMBAHAN: Paksa jendela atau area konten kembali ke paling atas saat pindah tab
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+      
+      // Jika area utama konten yang memiliki scroll sendiri, reset juga scrolly-nya:
+      const mainContentArea = document.querySelector('.content');
+      if (mainContentArea) mainContentArea.scrollTop = 0;
+    }
   }
-
   navButtons.forEach((btn) => {
     btn.addEventListener("click", () => switchTab(btn));
   });
