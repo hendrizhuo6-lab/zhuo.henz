@@ -14,13 +14,14 @@
   setInterval(tickClock, 1000);
 
   // ==========================================
-  // 1. LOGIKA NAVIGASI TAB
+  // 1. LOGIKA NAVIGASI TAB (Diperbarui dengan tab-server)
   // ==========================================
   const navButtons = Array.from(document.querySelectorAll(".navbar-button"));
   const tabContents = {
     "tab-home": document.getElementById("tab-content-home"),
     "tab-profile": document.getElementById("tab-content-profile"),
     "tab-dns": document.getElementById("tab-content-dns"),
+    "tab-server": document.getElementById("tab-content-server"), // <-- Ditambahkan di sini
     "tab-about": document.getElementById("tab-content-about"),
     "tab-help": document.getElementById("tab-content-help"),
   };
@@ -193,18 +194,16 @@
     copyToClipboard(formattedText.trim(), btnCopyOutput);
   });
 
- // ==========================================
-  // 3. PARSER CEK PERGANTIAN DOMAIN (Diperbaiki agar tidak dobel)
+  // ==========================================
+  // 3. PARSER CEK PERGANTIAN DOMAIN
   // ==========================================
   function parseDataByBrand(text) {
     if (!text || typeof text !== "string") return new Map();
 
-    // Normalisasi spasi dan pisahkan baris
     const lines = text.split("\n");
     const brandsMap = new Map();
     let currentBrand = " UMUM";
 
-    // Inisialisasi default brand
     brandsMap.set(currentBrand, []);
 
     const brandAliases = {
@@ -215,7 +214,6 @@
       let line = rawLine.trim();
       if (!line) continue;
 
-      // 1. Tangani kasus brand menempel langsung dengan domain (contoh: YOWESTOGELyowesblog352.com)
       const attachedMatch = line.match(/^([A-Z0-9\s]+?)([a-z0-9\-]+\.[a-z]{2,})$/);
       if (attachedMatch && !line.startsWith("[")) {
         let potentialBrand = attachedMatch[1].trim().toUpperCase();
@@ -224,14 +222,11 @@
         if (potentialBrand && potentialBrand.length <= 15) {
           currentBrand = brandAliases[potentialBrand] || potentialBrand;
           if (!brandsMap.has(currentBrand)) brandsMap.set(currentBrand, []);
-          
-          // Masukkan domain TANPA memproses ulang baris ini
           brandsMap.get(currentBrand).push(potentialDomain);
           continue;
         }
       }
 
-      // 2. Tangani baris yang merupakan nama Brand (format [BRAND] atau teks tanpa titik)
       const isBracketBrand = line.startsWith("[") && line.endsWith("]");
       const isNotDomain = !line.includes(".");
 
@@ -242,7 +237,6 @@
         continue;
       }
 
-      // 3. Tangani baris domain biasa
       const cleanDomain = line
         .toLowerCase()
         .replace(/^https?:\/\//i, "")
@@ -252,7 +246,6 @@
 
       if (cleanDomain && cleanDomain.includes(".")) {
         if (!brandsMap.has(currentBrand)) brandsMap.set(currentBrand, []);
-        // Pastikan domain tidak dimasukkan dua kali dalam brand yang sama
         const list = brandsMap.get(currentBrand);
         if (!list.includes(cleanDomain)) {
           list.push(cleanDomain);
@@ -260,7 +253,6 @@
       }
     }
 
-    // Bersihkan brand "UMUM" jika kosong
     if (brandsMap.has(" UMUM") && brandsMap.get(" UMUM").length === 0) {
       brandsMap.delete(" UMUM");
     }
@@ -268,8 +260,8 @@
     return brandsMap;
   }
 
-// ==========================================
-  // 4. CORE COMPARATOR (Audit Jumlah & Jenis Link: AMP, Blog, RTP, Normal)
+  // ==========================================
+  // 4. CORE COMPARATOR
   // ==========================================
   function compareData(oldText, newText) {
     const oldMap = parseDataByBrand(oldText);
@@ -283,7 +275,6 @@
     let isValid = true;
     const brandReports = [];
 
-    // Fungsi deteksi tipe/kategori link domain termasuk RTP
     function getDomainType(domain) {
       const d = domain.toLowerCase();
       if (d.includes("rtp")) return "RTP";
@@ -303,15 +294,12 @@
       const countOld = oldDomains.length;
       const countNew = newDomains.length;
 
-      // Hitung tipe link di data lama
       const oldTypes = { AMP: 0, BLOG: 0, RTP: 0, "NORMAL / ANGKA": 0 };
       oldDomains.forEach(d => oldTypes[getDomainType(d)]++);
 
-      // Hitung tipe link di data baru
       const newTypes = { AMP: 0, BLOG: 0, RTP: 0, "NORMAL / ANGKA": 0 };
       newDomains.forEach(d => newTypes[getDomainType(d)]++);
 
-      // Cek apakah jumlah total dan semua jenis tipe linknya cocok persis
       let brandMatch = (countOld === countNew);
       if (brandMatch) {
         if (oldTypes.AMP !== newTypes.AMP || 
@@ -341,8 +329,8 @@
     return { isValid, totalOld, totalNew, brandReports };
   }
 
-// ==========================================
-  // 5. RENDER HASIL (Keterangan kategori jadi merah jika kurang/beda)
+  // ==========================================
+  // 5. RENDER HASIL
   // ==========================================
   function renderResult(result) {
     const statusDiv = document.getElementById("statusContainer");
@@ -373,7 +361,6 @@
       const cardClass = b.brandMatch ? "match" : "mismatch";
       const icon = b.brandMatch ? "✅" : "❌";
       
-      // Tentukan warna teks rincian: merah jika tidak cocok, normal jika cocok
       const detailColor = b.brandMatch ? "var(--text-secondary)" : "var(--accent-red)";
       const detailWeight = b.brandMatch ? "normal" : "bold";
 
@@ -436,10 +423,7 @@
   let isProcessing = false;
   let renderTimeout = null;
 
-// ==========================================
-  // 6. DNS PARSER (Tab: DNS - Mempertahankan Tabel Lama + Menambah Tabel Pemilahan Baru)
-  // ==========================================
-function processData() {
+  function processData() {
     if (isProcessing) return;
     isProcessing = true;
 
@@ -460,7 +444,6 @@ function processData() {
         let tempNS = [];
         let rawPairs = [];
 
-        // 1. Parsing data mentah
         for (let i = 0; i < lines.length; i++) {
           const line = lines[i];
           const lineLower = line.toLowerCase();
@@ -490,7 +473,6 @@ function processData() {
           });
         }
 
-        // 2. Kelompokkan berdasarkan kesamaan DNS (Group by DNS)
         const dnsGroups = {};
         rawPairs.forEach(pair => {
           const key = pair.ns.trim().toLowerCase();
@@ -511,21 +493,17 @@ function processData() {
 
         Object.keys(dnsGroups).forEach(key => {
           const group = dnsGroups[key];
-          // Jika DNS memiliki > 1 domain, masuk ke kelompok massal
           if (group.domains.length > 1) {
             bulkGroups.push(group);
           } else {
-            // Jika hanya 1 domain (tidak masuk massal), masukkan ke tabel mode lama
             normalPairs.push({ domain: group.domains[0], ns: group.originalNS });
           }
         });
 
-        // 3. Update data untuk tabel mode lama (hanya menampilkan domain yang tidak masuk massal)
         processedDomains = normalPairs.map(p => p.domain);
         processedNS = normalPairs.map(p => p.ns);
-        renderTable(); // Merender tabel lama di atas
+        renderTable(); 
 
-        // 4. Render kotak massal dinamis di bawah
         renderDynamicBulkContainers(bulkGroups);
 
       } catch (error) {
@@ -536,7 +514,8 @@ function processData() {
       }
     }, 300);
   }
-function renderDynamicBulkContainers(groups) {
+
+  function renderDynamicBulkContainers(groups) {
     const container = document.getElementById('bulkResultContainer');
     if (!container) return;
 
@@ -569,7 +548,6 @@ function renderDynamicBulkContainers(groups) {
 
     container.innerHTML = html;
 
-    // Event listener untuk tombol copy Domain saja (berderet ke bawah)
     container.querySelectorAll('.btn-copy-dynamic-bulk').forEach((btn, idx) => {
       btn.addEventListener('click', () => {
         const targetGroup = groups[idx];
@@ -581,7 +559,6 @@ function renderDynamicBulkContainers(groups) {
       });
     });
 
-    // Event listener untuk tombol copy NS saja
     container.querySelectorAll('.btn-copy-ns-only').forEach((btn) => {
       btn.addEventListener('click', () => {
         const nsText = btn.getAttribute('data-ns');
@@ -590,126 +567,6 @@ function renderDynamicBulkContainers(groups) {
         });
       });
     });
-  }
-
-  function renderNormalTable(pairs) {
-    const container = document.getElementById('normalResultContainer');
-    if (!container) return;
-
-    if (pairs.length === 0) {
-      container.innerHTML = '<span style="color: #9CA3AF; font-style: italic;">Tidak ada data tunggal.</span>';
-      return;
-    }
-
-    let html = '<table style="width: 100%; border-collapse: collapse; font-size: 13px;">';
-    pairs.forEach(p => {
-      html += `<tr><td style="border-bottom: 1px solid #E5E7EB; padding: 4px;">${escapeHtml(p.domain)}</td><td style="border-bottom: 1px solid #E5E7EB; padding: 4px; color: #1D4ED8;">${escapeHtml(p.ns)}</td></tr>`;
-    });
-    html += '</table>';
-    container.innerHTML = html;
-  }
-
-  function renderBulkTable(pairs) {
-    const container = document.getElementById('bulkResultContainer');
-    if (!container) return;
-    
-    if (pairs.length === 0) {
-      container.innerHTML = '<span style="color: #9CA3AF; font-style: italic;">Tidak ada DNS yang sama.</span>';
-      return;
-    }
-
-    let html = '<table style="width: 100%; border-collapse: collapse; font-size: 13px;">';
-    pairs.forEach(p => {
-      html += `<tr><td style="border-bottom: 1px solid #E5E7EB; padding: 4px;">${escapeHtml(p.domain)}</td><td style="border-bottom: 1px solid #E5E7EB; padding: 4px; color: #047857; font-weight: bold;">${escapeHtml(p.ns)}</td></tr>`;
-    });
-    html += '</table>';
-    container.innerHTML = html;
-  }
-
-  function renderNormalTable(pairs) {
-    const container = document.getElementById('normalResultContainer');
-    if (!container) return;
-
-    if (pairs.length === 0) {
-      container.innerHTML = '<span style="color: #9CA3AF; font-style: italic;">Tidak ada DNS tunggal.</span>';
-      return;
-    }
-
-    let html = '<table style="width: 100%; border-collapse: collapse; font-size: 13px;">';
-    pairs.forEach(p => {
-      html += `<tr><td style="border-bottom: 1px solid #E5E7EB; padding: 4px;">${escapeHtml(p.domain)}</td><td style="border-bottom: 1px solid #E5E7EB; padding: 4px; color: #1D4ED8;">${escapeHtml(p.ns)}</td></tr>`;
-    });
-    html += '</table>';
-    container.innerHTML = html;
-  }
-
-  // Tambahan Event Listener untuk tombol copy di kotak hasil baru
-  document.getElementById('copyBulkBtn')?.addEventListener('click', () => {
-    const container = document.getElementById('bulkResultContainer');
-    const rows = container.querySelectorAll('tr');
-    if (rows.length === 0) {
-      showFeedback("⚠️ Tidak ada data DNS sama!", "#ef4444");
-      return;
-    }
-    let text = "";
-    rows.forEach(r => {
-      const domainCell = r.cells[0];
-      if (domainCell) text += domainCell.textContent + "\n";
-    });
-    navigator.clipboard.writeText(text.trim()).then(() => {
-      showFeedback("✅ Domain DNS sama disalin massal!", "#10b981");
-    });
-  });
-
-  document.getElementById('copyNormalBtn')?.addEventListener('click', () => {
-    const container = document.getElementById('normalResultContainer');
-    const rows = container.querySelectorAll('tr');
-    if (rows.length === 0) {
-      showFeedback("⚠️ Tidak ada data DNS tunggal!", "#ef4444");
-      return;
-    }
-    let text = "";
-    rows.forEach(r => {
-      const domainCell = r.cells[0];
-      if (domainCell) text += domainCell.textContent + "\n";
-    });
-    navigator.clipboard.writeText(text.trim()).then(() => {
-      showFeedback("✅ Domain DNS tunggal disalin!", "#3b82f6");
-    });
-  });
-
-  function renderBulkTable(pairs) {
-    const container = document.getElementById('bulkResultContainer');
-    if (!container) return;
-    
-    if (pairs.length === 0) {
-      container.innerHTML = '<p style="color: #9CA3AF; font-style: italic;">Tidak ada DNS yang sama (massal).</p>';
-      return;
-    }
-
-    let html = '<table style="width: 100%; border-collapse: collapse; font-size: 13px;">';
-    pairs.forEach(p => {
-      html += `<tr><td style="border-bottom: 1px solid #E5E7EB; padding: 4px;">${p.domain}</td><td style="border-bottom: 1px solid #E5E7EB; padding: 4px; color: #047857; font-weight: bold;">${p.ns}</td></tr>`;
-    });
-    html += '</table>';
-    container.innerHTML = html;
-  }
-
-  function renderNormalTable(pairs) {
-    const container = document.getElementById('normalResultContainer');
-    if (!container) return;
-
-    if (pairs.length === 0) {
-      container.innerHTML = '<p style="color: #9CA3AF; font-style: italic;">Tidak ada data standar.</p>';
-      return;
-    }
-
-    let html = '<table style="width: 100%; border-collapse: collapse; font-size: 13px;">';
-    pairs.forEach(p => {
-      html += `<tr><td style="border-bottom: 1px solid #E5E7EB; padding: 4px;">${p.domain}</td><td style="border-bottom: 1px solid #E5E7EB; padding: 4px; color: #1D4ED8;">${p.ns}</td></tr>`;
-    });
-    html += '</table>';
-    container.innerHTML = html;
   }
 
   function renderTable() {
@@ -996,4 +853,109 @@ function renderDynamicBulkContainers(groups) {
   }
 
   attachKeyboardNav();
+
+  // ==========================================
+  // 7. SERVER & BRAND MAPPING LOGIC (Dimasukkan ke dalam scope utama)
+  // ==========================================
+  const serverDatabase = [
+      {
+          name: "SERVER 1",
+          ips: ["132.48.200.96", "76.223.90.90"],
+          brands: ["WDBOS", "JPSLOT", "BOSJOKO", "ZEUSSLOT", "MANCINGDUIT", "JUTAWANBET", "LATOTO", "TOPANBOS88", "HOKBENTOTO"]
+      },
+      {
+          name: "SERVER 2",
+          ips: ["132.48.203.169", "76.223.88.75"],
+          brands: ["DEPOBOS", "ANGKABET", "TVTOTO", "PULITOTO", "WATITOTO", "FATCAI99", "RUANGWD", "TOPWD", "PESONA805"]
+      },
+      {
+          name: "SERVER 3",
+          ips: ["75.2.67.164", "3.33.129.68"],
+          brands: ["BANDAR80", "HOKIJITU", "INDOJP", "JUARA88", "LIGABANDOT", "LAPAK99", "LAPAKMAHJONG", "ARENA303", "WDMAHJONG", "SEJATIWIN", "MARKASWD", "CITAWIN"]
+      },
+      {
+          name: "EXTRA BRANDS",
+          ips: [],
+          brands: ["GENGTOTO", "FIATOGEL", "DINGDONGTOGEL", "TOGELUP"]
+      }
+  ];
+
+window.processServerMapping = function() {
+      const rawInput = document.getElementById('inputRawData').value;
+      const lines = rawInput.split('\n').map(l => l.trim()).filter(l => l.length > 0);
+
+      // Database brand yang sudah dipisah per baris agar lebih mudah dan akurat
+      const serverDatabase = [
+          {
+              name: "SERVER 1",
+              brands: ["WDBOS", "JPSLOT", "BOSJOKO", "ZEUSSLOT", "MANCINGDUIT", "JUTAWANBET", "JUTAWAN", "LATOTO", "LA", "TOPANBOS88", "HOKBENTOTO", "HOKBEN"]
+          },
+          {
+              name: "SERVER 2",
+              brands: ["DEPOBOS", "ANGKABET", "TVTOTO", "PULITOTO", "PULI", "WATITOTO", "WATI", "FATCAI99", "FATCAI", "RUANGWD", "TOPWD", "PESONA805"]
+          },
+          {
+              name: "SERVER 3",
+              brands: ["BANDAR80", "BANDAR", "HOKIJITU", "INDOJP", "JUARA88", "JUARA", "LIGABANDOT", "LAPAK99", "LAPAK", "LAPAKMAHJONG", "ARENA303", "ARENA", "WDMAHJONG", "WDMAH", "SEJATIWIN", "MARKASWD", "CITAWIN"]
+          }
+      ];
+
+      let server1Domains = [];
+      let server2Domains = [];
+      let server3Domains = [];
+      let idnFallbackResults = [];
+
+      lines.forEach(line => {
+          let lowerLine = line.toLowerCase();
+          let isDomain = line.includes('.');
+
+          if (isDomain) {
+              let targetServer = null;
+
+              for (let srv of serverDatabase) {
+                  for (let b of srv.brands) {
+                      let keyword = b.toLowerCase();
+                      let normalizedDomain = lowerLine.replace(/aa/g, "a").replace(/oo/g, "o").replace(/ee/g, "e");
+
+                      if (normalizedDomain.includes(keyword) || lowerLine.includes(keyword) || normalizedDomain.startsWith(keyword)) {
+                          targetServer = srv.name;
+                          break;
+                      }
+                  }
+                  if (targetServer) break;
+              }
+
+              if (targetServer === "SERVER 1") {
+                  if (!server1Domains.includes(line)) server1Domains.push(line);
+              } else if (targetServer === "SERVER 2") {
+                  if (!server2Domains.includes(line)) server2Domains.push(line);
+              } else if (targetServer === "SERVER 3") {
+                  if (!server3Domains.includes(line)) server3Domains.push(line);
+              } else {
+                  idnFallbackResults.push(line);
+              }
+          }
+      });
+
+      const tbody = document.getElementById('serverMappingBody');
+      const maxRows = Math.max(server1Domains.length, server2Domains.length, server3Domains.length, 1);
+      let tableHtml = '';
+
+      for (let i = 0; i < maxRows; i++) {
+          let d1 = server1Domains[i] || '';
+          let d2 = server2Domains[i] || '';
+          let d3 = server3Domains[i] || '';
+
+          tableHtml += `
+              <tr>
+                  <td style="border: 1px solid var(--border-primary); padding: 8px; color: var(--accent-blue-light);">${d1}</td>
+                  <td style="border: 1px solid var(--border-primary); padding: 8px; color: var(--accent-blue-light);">${d2}</td>
+                  <td style="border: 1px solid var(--border-primary); padding: 8px; color: var(--accent-blue-light);">${d3}</td>
+              </tr>
+          `;
+      }
+
+      tbody.innerHTML = tableHtml;
+      document.getElementById('outputIdnFallback').value = idnFallbackResults.join('\n');
+  };
 })();

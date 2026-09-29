@@ -1728,3 +1728,95 @@ body {
   color: var(--text-primary);
   border-color: var(--border-secondary);
 }
+
+/* ==========================================
+   CSS Styling untuk Tab Server & Brand Mapping (Dark Theme Compatible)
+   ========================================== */
+
+#tab-content-server .container {
+    background: var(--bg-card);
+    border-radius: var(--radius-lg);
+    border: 1px solid var(--border-primary);
+    padding: 20px;
+    box-shadow: var(--shadow-card);
+}
+
+#tab-content-server .form-group {
+    margin-bottom: 20px;
+}
+
+#tab-content-server label {
+    display: block;
+    font-weight: 600;
+    margin-bottom: 8px;
+    color: var(--text-secondary);
+    font-family: var(--font-mono);
+    font-size: 12px;
+    text-transform: uppercase;
+}
+
+#tab-content-server textarea {
+    width: 100%;
+    box-sizing: border-box;
+    padding: 13px 16px;
+    border: 1px solid var(--border-primary);
+    border-radius: var(--radius-md);
+    font-family: var(--font-mono);
+    font-size: 13px;
+    resize: vertical;
+    background-color: var(--bg-input);
+    color: var(--text-primary);
+    line-height: 1.7;
+    transition: border-color var(--transition-speed), box-shadow var(--transition-speed);
+}
+
+#tab-content-server textarea:focus {
+    border-color: var(--accent-blue);
+    box-shadow: 0 0 0 3px var(--accent-blue-dim);
+    outline: none;
+}
+
+/* Container 2 Kotak Hasil (Dual Output Box) */
+#tab-content-server .result-container {
+    display: flex;
+    gap: 20px;
+    flex-wrap: wrap;
+    margin-top: 20px;
+}
+
+/* Kotak Hasil Individual */
+#tab-content-server .result-box {
+    flex: 1;
+    min-width: 300px;
+    border-radius: var(--radius-md);
+    padding: 16px;
+    box-shadow: var(--shadow-card);
+}
+
+/* Kotak 1: Hijau (Terdeteksi) */
+#tab-content-server .result-box.box-green {
+    border: 2px solid var(--accent-green);
+    background: linear-gradient(180deg, rgba(52, 211, 153, 0.04) 0%, var(--bg-card) 100%);
+}
+
+#tab-content-server .result-box.box-green h3 {
+    color: var(--accent-green);
+    margin-top: 0;
+    margin-bottom: 10px;
+    font-size: 14px;
+    font-family: var(--font-mono);
+}
+
+/* Kotak 2: Oranye (Fallback IDN) */
+#tab-content-server .result-box.box-orange {
+    border: 2px solid var(--accent-amber);
+    background: linear-gradient(180deg, rgba(240, 169, 64, 0.04) 0%, var(--bg-card) 100%);
+}
+
+#tab-content-server .result-box.box-orange h3 {
+    color: var(--accent-amber);
+    margin-top: 0;
+    margin-bottom: 10px;
+    font-size: 14px;
+    font-family: var(--font-mono);
+}

@@ -58,6 +58,17 @@
         >
           ◈ DNS
         </button>
+        <!-- Tombol Tab Baru: Server & Brand Mapping -->
+        <button 
+          id="tab-server" 
+          class="navbar-button" 
+          role="tab"
+          aria-selected="false"
+          aria-controls="tab-content-server"
+          tabindex="-1"
+        >
+          ◈ SERVER MAPPING
+        </button>
         <button 
           id="tab-about" 
           class="navbar-button" 
@@ -92,7 +103,7 @@
           <section id="tab-checker">
             <h2 class="page-title">🔍 Cek Pergantian Domain</h2>
 
-<div class="checker-grid">
+            <div class="checker-grid">
               <div class="checker-box box-lama">
                 <label for="oldData">📦 1. Data Lama (Asal)</label>
                 <textarea
@@ -187,7 +198,7 @@
           </div>
         </div>
 
-<!-- TAB 3: DNS -->
+        <!-- TAB 3: DNS -->
         <div 
           id="tab-content-dns" 
           class="tabs-content" 
@@ -263,7 +274,7 @@
               </div>
             </div>
 
-            <!-- Kotak Hasil Massal Dinamis (Otomatis bertambah sesuai grup DNS yang sama) -->
+            <!-- Kotak Hasil Massal Dinamis -->
             <div style="padding: 20px; border-top: 1px solid var(--border-primary); margin-top: 20px;">
               <h3 style="margin-bottom: 15px; font-size: 15px; color: var(--text-primary);">⚡ Kelompok DNS Sama (Massal)</h3>
               <div id="bulkResultContainer">
@@ -278,7 +289,58 @@
           </div>
         </div>
 
-        <!-- TAB 4: ABOUT -->
+        <!-- TAB 4: SERVER MAPPING (TAB BARU) -->
+        <div 
+          id="tab-content-server" 
+          class="tabs-content" 
+          role="tabpanel"
+          aria-labelledby="tab-server"
+        >
+          <h1 class="page-title">🌐 Pusat Mapping Server & Brand</h1>
+          <div class="container" style="padding: 0;">
+            <p style="color: var(--text-secondary); margin-bottom: 20px;">Masukkan daftar brand atau domain mentah di bawah ini. Sistem akan otomatis memetakannya ke 2 kotak hasil secara akurat.</p>
+            
+            <div class="form-group" style="margin-bottom: 20px;">
+              <label for="inputRawData" style="display: block; font-weight: bold; margin-bottom: 8px;">Masukkan Data (Brand / Domain Mentah):</label>
+              <textarea id="inputRawData" rows="8" placeholder="Contoh:&#10;GENGTOTO&#10;geng39157.com&#10;wdmahjong38422.com&#10;..." style="width: 100%; padding: 12px; border-radius: 6px; background: var(--bg-secondary); color: var(--text-primary); border: 1px solid var(--border-primary); font-family: monospace;"></textarea>
+              <button onclick="processServerMapping()" class="btn btn-primary" style="margin-top: 12px;">🔄 Proses Mapping</button>
+            </div>
+
+            <!-- 2 Kotak Hasil (Dual Output Box) -->
+            <div class="result-container" style="display: flex; gap: 20px; flex-wrap: wrap; margin-top: 20px;">
+                
+<!-- Kotak Hasil 1: Tabel Server Mapping -->
+<div class="result-box box-green" style="flex: 2; min-width: 500px;">
+    <h3 style="color: var(--accent-green); margin-top: 0; font-size: 15px;">Kotak 1: Mapping Berdasarkan Server</h3>
+    <div class="output-table-container" style="max-height: 400px; overflow-y: auto; border: 1px solid var(--border-primary); border-radius: 6px; background: var(--bg-input);">
+        <table class="sheet-table" id="serverMappingTable" style="width: 100%; border-collapse: collapse; font-family: var(--font-mono); font-size: 13px;">
+            <thead>
+                <tr style="background: var(--bg-tertiary); color: var(--text-secondary); text-align: center;">
+                    <th style="border: 1px solid var(--border-primary); padding: 8px;">SERVER 1<br><span style="font-size: 10px; color: var(--accent-blue-light);">132.48.200.96 | 76.223.90.90</span></th>
+                    <th style="border: 1px solid var(--border-primary); padding: 8px;">SERVER 2<br><span style="font-size: 10px; color: var(--accent-blue-light);">132.48.203.169 | 76.223.88.75</span></th>
+                    <th style="border: 1px solid var(--border-primary); padding: 8px;">SERVER 3<br><span style="font-size: 10px; color: var(--accent-blue-light);">75.2.67.164 | 3.33.129.68</span></th>
+                </tr>
+            </thead>
+            <tbody id="serverMappingBody">
+                <tr>
+                    <td colspan="3" style="text-align: center; padding: 20px; color: var(--text-tertiary); font-style: italic;">Hasil mapping server akan muncul di sini...</td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+</div>
+
+                <!-- Kotak Hasil 2: Domain Tanpa Brand / Fallback ke IDN -->
+                <div class="result-box box-orange" style="flex: 1; min-width: 300px; border: 2px solid #FF9800; padding: 15px; border-radius: 8px; background: rgba(255, 152, 0, 0.05);">
+                    <h3 style="color: #FF9800; margin-top: 0; font-size: 15px;">Kotak 2: Fallback ke IDN (Tidak Dikenali)</h3>
+                    <textarea id="outputIdnFallback" rows="12" readonly placeholder="Domain tanpa brand / masuk IDN..." style="width: 100%; padding: 10px; border-radius: 4px; background: var(--bg-secondary); color: var(--text-primary); border: 1px solid var(--border-primary); font-family: monospace; resize: vertical;"></textarea>
+                </div>
+
+            </div>
+          </div>
+        </div>
+
+        <!-- TAB 5: ABOUT -->
         <div 
           id="tab-content-about" 
           class="tabs-content" 
@@ -294,6 +356,7 @@
               <li><strong>🔍 Cek Pergantian Domain</strong> - Bandingkan data lama dan baru dengan validasi otomatis</li>
               <li><strong>🗂 Filter Domain</strong> - Kelompokkan domain berdasarkan brand dengan auto-detection</li>
               <li><strong>📊 DNS Parser</strong> - Pisahkan domain dan nameserver dari data mentah</li>
+              <li><strong>🌐 Server & Brand Mapping</strong> - Pemetaan otomatis server, brand, dan fallback IDN</li>
             </ul>
 
             <h2>Teknologi:</h2>
@@ -303,17 +366,10 @@
               <li>Clipboard API dengan fallback</li>
               <li>ARIA accessibility support</li>
             </ul>
-
-            <h2>Keamanan:</h2>
-            <ul>
-              <li>✅ XSS Protection - Semua input di-sanitasi</li>
-              <li>✅ Input Validation - Validasi ketat sebelum proses</li>
-              <li>✅ Error Handling - Try-catch di semua fungsi kritis</li>
-            </ul>
           </div>
         </div>
 
-        <!-- TAB 5: HELP -->
+        <!-- TAB 6: HELP -->
         <div 
           id="tab-content-help" 
           class="tabs-content" 
@@ -331,44 +387,26 @@
                 <li>Masukkan data lama di kolom kiri dengan format: <code>[BRAND]</code> diikuti daftar domain</li>
                 <li>Masukkan data baru di kolom kanan dengan format yang sama</li>
                 <li>Klik <strong>CEK PERGANTIAN</strong> untuk membandingkan</li>
-                <li>Hasil akan menunjukkan perbedaan per brand dan kategori</li>
               </ol>
 
               <h3>2. Filter Domain</h3>
               <ol>
                 <li>Tempelkan daftar domain di kolom kiri (satu per baris)</li>
                 <li>Hasil pengelompokan otomatis muncul di kolom kanan</li>
-                <li>Klik <strong>Copy</strong> untuk menyalin hasil terformat</li>
               </ol>
 
               <h3>3. DNS Parser</h3>
               <ol>
                 <li>Tempelkan data mentah (domain + nameserver) di kolom kiri</li>
-                <li>Klik <strong>Proses</strong> atau tunggu auto-process</li>
-                <li>Data terpisah otomatis di tabel hasil</li>
-                <li>Gunakan tombol copy untuk mengekspor data</li>
+                <li>Klik <strong>Proses</strong> untuk memisahkan data</li>
               </ol>
-            </section>
 
-            <section>
-              <h2>⌨️ Shortcut Keyboard</h2>
-              <ul>
-                <li><kbd>Ctrl+C</kbd> - Copy sel aktif (di tabel DNS)</li>
-                <li><kbd>Tab</kbd> - Navigasi antar sel</li>
-                <li><kbd>↑</kbd> <kbd>↓</kbd> <kbd>←</kbd> <kbd>→</kbd> - Navigasi sel</li>
-                <li><kbd>Enter</kbd> - Pindah ke baris berikutnya</li>
-              </ul>
-            </section>
-
-            <section>
-              <h2>🐛 Melaporkan Bug</h2>
-              <p>Jika menemukan bug, silakan laporkan dengan detail:</p>
-              <ul>
-                <li>Langkah-langkah untuk mereproduksi</li>
-                <li>Data yang digunakan (jika bisa)</li>
-                <li>Screenshot error</li>
-                <li>Browser dan versi</li>
-              </ul>
+              <h3>4. Server & Brand Mapping</h3>
+              <ol>
+                <li>Tempelkan daftar brand atau domain mentah pada tab Server Mapping</li>
+                <li>Klik <strong>Proses Mapping</strong></li>
+                <li>Lihat hasil pemetaan di Kotak 1 (Terdeteksi) dan Kotak 2 (Fallback IDN)</li>
+              </ol>
             </section>
           </div>
         </div>
