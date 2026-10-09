@@ -1129,8 +1129,9 @@
     if (active instanceof HTMLElement && active.classList.contains("redirect-domain-cell")) {
       const domains = Array.from(document.querySelectorAll("#redirectTableBody .redirect-domain-cell"));
       const currentIndex = domains.indexOf(active);
-      if (event.key === "Tab") {
-        const nextDomain = domains[currentIndex + (event.shiftKey ? -1 : 1)];
+      if (event.key === "ArrowDown" || event.key === "ArrowUp" || event.key === "Tab") {
+        const direction = event.key === "ArrowUp" || (event.key === "Tab" && event.shiftKey) ? -1 : 1;
+        const nextDomain = domains[currentIndex + direction];
         if (nextDomain) {
           event.preventDefault();
           nextDomain.focus();
