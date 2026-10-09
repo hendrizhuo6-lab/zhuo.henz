@@ -2988,6 +2988,20 @@ textarea::placeholder {
     white-space: nowrap;
 }
 
+.redirect-domain-cell {
+    border-radius: 3px;
+    color: #c4d9ff;
+    cursor: copy;
+    outline: none;
+}
+
+.redirect-domain-cell:hover,
+.redirect-domain-cell:focus-visible {
+    background: rgba(107, 157, 242, 0.2);
+    color: #f3f7ff;
+    box-shadow: 0 0 0 2px rgba(107, 157, 242, 0.2);
+}
+
 .redirect-invalid-url,
 .redirect-error-label {
     color: #ff9eab;

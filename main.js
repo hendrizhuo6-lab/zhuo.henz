@@ -136,7 +136,23 @@
 
       const urlCell = document.createElement("td");
       urlCell.className = "redirect-url-cell";
-      urlCell.textContent = link.source;
+      if (link.url && link.domain) {
+        const domainStart = link.source.toLowerCase().indexOf(link.domain.toLowerCase());
+        if (domainStart >= 0) {
+          urlCell.append(
+            document.createTextNode(link.source.slice(0, domainStart)),
+            createRedirectDomainElement(link.domain, link.source.slice(domainStart, domainStart + link.domain.length)),
+            document.createTextNode(link.source.slice(domainStart + link.domain.length))
+          );
+        } else {
+          urlCell.append(
+            document.createTextNode(`${link.source} · `),
+            createRedirectDomainElement(link.domain, link.domain)
+          );
+        }
+      } else {
+        urlCell.textContent = link.source;
+      }
       if (link.error) {
         urlCell.title = link.error;
         urlCell.classList.add("redirect-invalid-url");
@@ -188,6 +204,17 @@
     });
   }
 
+  function createRedirectDomainElement(domain, displayText) {
+    const domainElement = document.createElement("span");
+    domainElement.className = "redirect-domain-cell";
+    domainElement.setAttribute("role", "button");
+    domainElement.setAttribute("tabindex", "0");
+    domainElement.setAttribute("aria-label", `Domain ${domain}. Tekan Ctrl+C untuk menyalin.`);
+    domainElement.dataset.domain = domain;
+    domainElement.textContent = displayText;
+    return domainElement;
+  }
+
   function processRedirectLinks() {
     if (!redirectInput || !redirectProgress) return;
     const rawUrls = redirectInput.value.split(/\r?\n/).map((url) => url.trim()).filter(Boolean);
@@ -199,12 +226,14 @@
     let invalidCount = 0;
     redirectLinks = rawUrls.map((source) => {
       try {
-        return { source, url: normalizeRedirectUrl(source), error: "" };
+        const url = normalizeRedirectUrl(source);
+        return { source, url, domain: new URL(url).hostname, error: "" };
       } catch (error) {
         invalidCount += 1;
         return {
           source,
           url: "",
+          domain: "",
           error: error instanceof Error ? error.message : "URL tidak valid.",
         };
       }
@@ -1029,12 +1058,15 @@
     const active = document.activeElement;
     const isDnsCell = active && active.tagName === "TD" && active.hasAttribute("tabindex");
     const isServerDomain = active && active.classList.contains("server-domain-cell");
-    if (isDnsCell || isServerDomain) {
+    const isRedirectDomain = active && active.classList.contains("redirect-domain-cell");
+    if (isDnsCell || isServerDomain || isRedirectDomain) {
       e.preventDefault();
-      const text = isServerDomain ? active.dataset.domain : active.textContent.trim();
+      const text = isServerDomain || isRedirectDomain ? active.dataset.domain : active.textContent.trim();
       if (text) {
         e.clipboardData.setData("text/plain", text);
-        if (isServerDomain) {
+        if (isRedirectDomain) {
+          if (redirectProgress) redirectProgress.textContent = `Berhasil menyalin domain: ${text}.`;
+        } else if (isServerDomain) {
           showServerDomainCopied(active);
         } else {
           showFeedback(`✅ Disalin: "${text}"`, "#10b981");
@@ -1091,6 +1123,24 @@
 
   document.addEventListener("keydown", function (event) {
     const active = document.activeElement;
+    if (active instanceof HTMLElement && active.classList.contains("redirect-domain-cell")) {
+      const domains = Array.from(document.querySelectorAll("#redirectTableBody .redirect-domain-cell"));
+      const currentIndex = domains.indexOf(active);
+      if (event.key === "Tab") {
+        const nextDomain = domains[currentIndex + (event.shiftKey ? -1 : 1)];
+        if (nextDomain) {
+          event.preventDefault();
+          nextDomain.focus();
+        }
+        return;
+      }
+      if (event.key === "Enter" || (event.key.toLowerCase() === "c" && event.ctrlKey)) {
+        event.preventDefault();
+        copyRedirectDomain(active);
+      }
+      return;
+    }
+
     if (!(active instanceof HTMLElement) || !active.classList.contains("server-domain-cell")) return;
 
     const list = active.parentElement;
@@ -1120,6 +1170,40 @@
       copyServerDomain(active);
     }
   });
+
+  async function copyRedirectDomain(domainElement) {
+    const domain = domainElement.dataset.domain;
+    if (!domain || !redirectProgress) return;
+
+    try {
+      if (!navigator.clipboard?.writeText) {
+        throw new Error("Clipboard API tidak tersedia.");
+      }
+      await navigator.clipboard.writeText(domain);
+      redirectProgress.textContent = `Berhasil menyalin domain: ${domain}.`;
+    } catch (error) {
+      console.error("Gagal menyalin domain URL asal:", error);
+      const temporaryInput = document.createElement("textarea");
+      temporaryInput.value = domain;
+      temporaryInput.setAttribute("readonly", "");
+      temporaryInput.style.position = "fixed";
+      temporaryInput.style.left = "-9999px";
+      document.body.appendChild(temporaryInput);
+      let copied = false;
+      try {
+        temporaryInput.select();
+        copied = document.execCommand("copy");
+      } catch (fallbackError) {
+        console.error("Clipboard fallback gagal menyalin domain URL asal:", fallbackError);
+      } finally {
+        temporaryInput.remove();
+        domainElement.focus();
+      }
+      redirectProgress.textContent = copied
+        ? `Berhasil menyalin domain: ${domain}.`
+        : "Gagal menyalin domain. Silakan coba lagi.";
+    }
+  }
 
   document.addEventListener("focusin", function (e) {
     const target = e.target;
