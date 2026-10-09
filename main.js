@@ -1,44 +1,170 @@
 (function () {
   "use strict";
 
-  // ==========================================
-  // 0. JAM SISTEM (status bar)
-  // ==========================================
-  const clockEl = document.getElementById("systemClock");
-  function tickClock() {
-    if (!clockEl) return;
-    const now = new Date();
-    clockEl.textContent = now.toLocaleTimeString("id-ID", { hour12: false });
+  // ═══════════════ UTIL ═══════════════
+  function escapeHtml(str) {
+    return String(str)
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;")
+      .replace(/'/g, "&#039;");
   }
-  tickClock();
-  setInterval(tickClock, 1000);
 
-  // ==========================================
-  // 1. LOGIKA NAVIGASI TAB (Diperbarui dengan tab-server)
-  // ==========================================
+  // ═══════════════ AUTO-DETECT OS UNTUK LABEL SHORTCUT ═══════════════
+  const isMac = /Mac|iPhone|iPad|iPod/.test(navigator.platform || navigator.userAgent);
+  const modKey = isMac ? "⌘" : "Ctrl";
+  const enterKey = isMac ? "↵" : "Enter";
+
+  function applyOSLabels() {
+    // Navbar shortcut (⌘1 → Ctrl+1, dst)
+    document.querySelectorAll(".nb-shortcut").forEach((el) => {
+      if (isMac) return;
+      el.textContent = el.textContent.replace("⌘", modKey + "+");
+    });
+
+    // Tombol kbd (⌘↵ → Ctrl+Enter)
+    document.querySelectorAll(".btn-kbd").forEach((el) => {
+      let t = el.textContent;
+      t = t.replace("⌘", isMac ? "⌘" : "Ctrl+");
+      t = t.replace("↵", isMac ? "↵" : "Enter");
+      el.textContent = t;
+    });
+
+    // Footer hint sidebar (⌘K palette · ⌘1-5 tabs)
+    document.querySelectorAll(".navbar-footer-hint").forEach((el) => {
+      if (isMac) return;
+      el.innerHTML = el.innerHTML
+        .replace(/⌘K/g, "Ctrl+K")
+        .replace(/⌘1-5/g, "Ctrl+1-5");
+    });
+
+    // Command palette footer
+    document.querySelectorAll(".cmd-footer kbd").forEach((el) => {
+      if (el.textContent === "⌘") el.textContent = isMac ? "⌘" : "Ctrl";
+    });
+
+    // Help tab (Panduan)
+    document.querySelectorAll("#tab-content-help kbd").forEach((el) => {
+      const t = el.textContent.trim();
+      if (t === "⌘") el.textContent = isMac ? "⌘" : "Ctrl";
+      if (t === "↵") el.textContent = isMac ? "↵" : "Enter";
+    });
+  }
+
+  // ═══════════════ CLOCK & UPTIME ═══════════════
+  const clockEl = document.getElementById("systemClock");
+  const uptimeEl = document.getElementById("uptime");
+  const bootTime = Date.now();
+
+  function tick() {
+    const now = new Date();
+    if (clockEl) clockEl.textContent = now.toLocaleTimeString("id-ID", { hour12: false });
+    if (uptimeEl) {
+      const sec = Math.floor((Date.now() - bootTime) / 1000);
+      const h = String(Math.floor(sec / 3600)).padStart(2, "0");
+      const m = String(Math.floor((sec % 3600) / 60)).padStart(2, "0");
+      const s = String(sec % 60).padStart(2, "0");
+      uptimeEl.textContent = `${h}:${m}:${s}`;
+    }
+  }
+  tick();
+  setInterval(tick, 1000);
+
+  // ═══════════════ CONSOLE LOG ═══════════════
+  const consoleBody = document.getElementById("consoleBody");
+  const consoleCount = document.getElementById("consoleCount");
+  const consoleClearBtn = document.getElementById("consoleClearBtn");
+  const consoleToggleBtn = document.getElementById("consoleToggleBtn");
+  const consoleLog = document.getElementById("consoleLog");
+  let logCount = 0;
+
+  function log(message, type = "info") {
+    if (!consoleBody) return;
+    const now = new Date();
+    const time = now.toLocaleTimeString("id-ID", { hour12: false });
+    const line = document.createElement("div");
+    line.className = "console-line";
+    line.innerHTML = `<span class="console-time">${time}</span><span class="console-msg ${type}">${escapeHtml(message)}</span>`;
+    consoleBody.appendChild(line);
+    consoleBody.scrollTop = consoleBody.scrollHeight;
+    logCount++;
+    if (consoleCount) consoleCount.textContent = String(logCount);
+
+    const excess = consoleBody.children.length - 200;
+    for (let i = 0; i < excess; i++) {
+      consoleBody.removeChild(consoleBody.firstChild);
+    }
+  }
+
+  consoleClearBtn?.addEventListener("click", () => {
+    if (!consoleBody) return;
+    consoleBody.innerHTML = "";
+    logCount = 0;
+    if (consoleCount) consoleCount.textContent = "0";
+    log("Console cleared.", "info");
+  });
+
+  consoleToggleBtn?.addEventListener("click", () => {
+    if (!consoleLog) return;
+    consoleLog.classList.toggle("collapsed");
+    consoleToggleBtn.textContent = consoleLog.classList.contains("collapsed") ? "+" : "−";
+  });
+
+  log("Console ready. Semua aksi akan tercatat di sini.", "info");
+  log(`OS detected: ${isMac ? "macOS" : "Windows/Linux"} — shortcut: ${isMac ? "⌘" : "Ctrl"}`, "info");
+
+  // Apply OS-specific labels
+  applyOSLabels();
+
+  // ═══════════════ FEEDBACK TOAST ═══════════════
+  const feedback = document.getElementById("copyFeedback");
+  function showFeedback(msg) {
+    if (!feedback) return;
+    feedback.textContent = msg;
+    feedback.classList.add("show");
+    clearTimeout(feedback._timeout);
+    feedback._timeout = setTimeout(() => feedback.classList.remove("show"), 2200);
+  }
+
+  function fallbackCopy(text) {
+    const ta = document.createElement("textarea");
+    ta.value = text;
+    ta.style.position = "fixed";
+    ta.style.left = "-9999px";
+    document.body.appendChild(ta);
+    ta.select();
+    try { document.execCommand("copy"); showFeedback("✅ Disalin (fallback)"); }
+    catch { showFeedback("❌ Gagal menyalin"); }
+    document.body.removeChild(ta);
+  }
+
+  // ═══════════════ TAB NAVIGATION ═══════════════
   const navButtons = Array.from(document.querySelectorAll(".navbar-button"));
   const tabContents = {
-    "tab-home": document.getElementById("tab-content-home"),
-    "tab-profile": document.getElementById("tab-content-profile"),
-    "tab-dns": document.getElementById("tab-content-dns"),
+    "tab-home":     document.getElementById("tab-content-home"),
+    "tab-profile":  document.getElementById("tab-content-profile"),
+    "tab-dns":      document.getElementById("tab-content-dns"),
     "tab-redirect": document.getElementById("tab-content-redirect"),
-    "tab-server": document.getElementById("tab-content-server"), // <-- Ditambahkan di sini
-    "tab-about": document.getElementById("tab-content-about"),
-    "tab-help": document.getElementById("tab-content-help"),
+    "tab-server":   document.getElementById("tab-content-server"),
+    "tab-about":    document.getElementById("tab-content-about"),
+    "tab-help":     document.getElementById("tab-content-help"),
+  };
+  const tabNames = {
+    "tab-home": "Filter", "tab-profile": "Filter Domain", "tab-dns": "DNS Parser",
+    "tab-redirect": "Redirect", "tab-server": "Server Map",
+    "tab-about": "Tentang", "tab-help": "Panduan",
   };
 
- function switchTab(activeBtn) {
+  function switchTab(activeBtn) {
     if (!activeBtn) return;
     const targetId = activeBtn.id;
-
     navButtons.forEach((btn) => {
       btn.classList.remove("active");
       btn.setAttribute("aria-selected", "false");
       btn.setAttribute("tabindex", "-1");
     });
-    Object.values(tabContents).forEach((content) => {
-      if (content) content.classList.remove("active");
-    });
+    Object.values(tabContents).forEach((c) => c && c.classList.remove("active"));
 
     activeBtn.classList.add("active");
     activeBtn.setAttribute("aria-selected", "true");
@@ -46,31 +172,21 @@
     const targetContent = tabContents[targetId];
     if (targetContent) {
       targetContent.classList.add("active");
-      
-      // TAMBAHAN: Paksa jendela atau area konten kembali ke paling atas saat pindah tab
-      window.scrollTo({ top: 0, behavior: 'smooth' });
-      
-      // Jika area utama konten yang memiliki scroll sendiri, reset juga scrolly-nya:
-      const mainContentArea = document.querySelector('.content');
-      if (mainContentArea) mainContentArea.scrollTop = 0;
+      const mainContent = document.querySelector(".content");
+      if (mainContent) mainContent.scrollTop = 0;
+      log(`Switched to module: ${tabNames[targetId] || targetId}`, "info");
     }
   }
+
   navButtons.forEach((btn) => {
     btn.addEventListener("click", () => switchTab(btn));
     btn.addEventListener("keydown", (event) => {
       let nextIndex = navButtons.indexOf(btn);
-      if (event.key === "ArrowDown" || event.key === "ArrowRight") {
-        nextIndex = (nextIndex + 1) % navButtons.length;
-      } else if (event.key === "ArrowUp" || event.key === "ArrowLeft") {
-        nextIndex = (nextIndex - 1 + navButtons.length) % navButtons.length;
-      } else if (event.key === "Home") {
-        nextIndex = 0;
-      } else if (event.key === "End") {
-        nextIndex = navButtons.length - 1;
-      } else {
-        return;
-      }
-
+      if (event.key === "ArrowDown" || event.key === "ArrowRight") nextIndex = (nextIndex + 1) % navButtons.length;
+      else if (event.key === "ArrowUp" || event.key === "ArrowLeft") nextIndex = (nextIndex - 1 + navButtons.length) % navButtons.length;
+      else if (event.key === "Home") nextIndex = 0;
+      else if (event.key === "End") nextIndex = navButtons.length - 1;
+      else return;
       event.preventDefault();
       const nextButton = navButtons[nextIndex];
       switchTab(nextButton);
@@ -78,8 +194,156 @@
     });
   });
 
+  // ═══════════════ SIDEBAR SEARCH ═══════════════
+  const navSearch = document.getElementById("navSearch");
+  navSearch?.addEventListener("input", (e) => {
+    const q = e.target.value.trim().toLowerCase();
+    let visible = 0;
+    navButtons.forEach((btn) => {
+      const label = btn.querySelector(".nb-label")?.textContent.toLowerCase() || "";
+      const kw = btn.dataset.keywords?.toLowerCase() || "";
+      const matches = !q || label.includes(q) || kw.includes(q);
+      btn.classList.toggle("hidden", !matches);
+      btn.tabIndex = matches ? 0 : -1;
+      if (matches) visible++;
+    });
+    if (q) log(`Search: "${q}" — ${visible} modul ditemukan.`, "info");
+  });
+
+  // ═══════════════ COMMAND PALETTE ═══════════════
+  const cmdPalette = document.getElementById("cmdPalette");
+  const cmdInput = document.getElementById("cmdInput");
+  const cmdList = document.getElementById("cmdList");
+  let cmdItems = [];
+  let cmdSelected = 0;
+  let previouslyFocused = null;
+
+  function buildCommandItems() {
+    return [
+      { icon: "⟐", label: "Filter — Cek pergantian domain", hint: `${isMac ? "⌘" : "Ctrl+"}1`, action: () => switchTab(document.getElementById("tab-home")) },
+      { icon: "⊞", label: "Filter Domain — Kelompokkan by brand", hint: `${isMac ? "⌘" : "Ctrl+"}2`, action: () => switchTab(document.getElementById("tab-profile")) },
+      { icon: "◫", label: "DNS Parser — Pisahkan domain & NS", hint: `${isMac ? "⌘" : "Ctrl+"}3`, action: () => switchTab(document.getElementById("tab-dns")) },
+      { icon: "⇗", label: "Redirect — Pratinjau link", hint: `${isMac ? "⌘" : "Ctrl+"}4`, action: () => switchTab(document.getElementById("tab-redirect")) },
+      { icon: "◫", label: "Server Map — Mapping brand ke server", hint: `${isMac ? "⌘" : "Ctrl+"}5`, action: () => switchTab(document.getElementById("tab-server")) },
+      { icon: "ⓘ", label: "Tentang aplikasi", hint: "", action: () => switchTab(document.getElementById("tab-about")) },
+      { icon: "?", label: "Panduan penggunaan", hint: "", action: () => switchTab(document.getElementById("tab-help")) },
+      { icon: "▸", label: "Jalankan cek pergantian domain", hint: isMac ? "⌘↵" : "Ctrl+Enter", action: () => { switchTab(document.getElementById("tab-home")); setTimeout(performCheck, 100); } },
+      { icon: "⎘", label: "Copy hasil grouping domain", hint: "", action: () => { switchTab(document.getElementById("tab-profile")); setTimeout(() => document.getElementById("btn-copy-output")?.click(), 100); } },
+      { icon: "◇", label: "Clear console log", hint: "", action: () => consoleClearBtn?.click() },
+      { icon: "▸", label: "Jalankan server mapping", hint: `${isMac ? "⌘" : "Ctrl+"}5`, action: () => { switchTab(document.getElementById("tab-server")); setTimeout(() => window.processServerMapping?.(), 100); } },
+      { icon: "↻", label: "Reset checker", hint: "", action: () => { switchTab(document.getElementById("tab-home")); setTimeout(resetChecker, 100); } },
+    ];
+  }
+
+  function renderCmdList(items) {
+    cmdList.replaceChildren();
+    if (items.length === 0) {
+      const div = document.createElement("div");
+      div.className = "cmd-item";
+      div.textContent = "Tidak ada perintah cocok.";
+      cmdList.appendChild(div);
+      return;
+    }
+    items.forEach((item, i) => {
+      const el = document.createElement("div");
+      el.className = "cmd-item" + (i === cmdSelected ? " selected" : "");
+      el.innerHTML = `<span class="cmd-item-icon">${item.icon}</span><span class="cmd-item-label">${escapeHtml(item.label)}</span><span class="cmd-item-hint">${item.hint || ""}</span>`;
+      el.addEventListener("click", () => { item.action(); closeCommandPalette(); });
+      el.addEventListener("mouseenter", () => { cmdSelected = i; updateCmdSelection(); });
+      cmdList.appendChild(el);
+    });
+  }
+
+  function updateCmdSelection() {
+    Array.from(cmdList.children).forEach((el, i) => el.classList.toggle("selected", i === cmdSelected));
+    const sel = cmdList.children[cmdSelected];
+    if (sel && sel.scrollIntoView) sel.scrollIntoView({ block: "nearest" });
+  }
+
+  function openCommandPalette() {
+    if (!cmdPalette) return;
+    previouslyFocused = document.activeElement;
+    cmdPalette.hidden = false;
+    cmdItems = buildCommandItems();
+    cmdSelected = 0;
+    renderCmdList(cmdItems);
+    if (cmdInput) { cmdInput.value = ""; setTimeout(() => cmdInput.focus(), 20); }
+    log("Command palette dibuka.", "info");
+  }
+
+  function closeCommandPalette() {
+    if (cmdPalette) cmdPalette.hidden = true;
+    if (previouslyFocused && previouslyFocused.focus) {
+      try { previouslyFocused.focus(); } catch (_) {}
+    }
+  }
+
+  cmdInput?.addEventListener("input", (e) => {
+    const q = e.target.value.toLowerCase();
+    const filtered = buildCommandItems().filter((item) => item.label.toLowerCase().includes(q));
+    cmdItems = filtered;
+    cmdSelected = 0;
+    renderCmdList(filtered);
+  });
+
+  cmdInput?.addEventListener("keydown", (e) => {
+    if (e.key === "ArrowDown") {
+      e.preventDefault();
+      cmdSelected = Math.min(cmdSelected + 1, cmdItems.length - 1);
+      updateCmdSelection();
+    } else if (e.key === "ArrowUp") {
+      e.preventDefault();
+      cmdSelected = Math.max(cmdSelected - 1, 0);
+      updateCmdSelection();
+    } else if (e.key === "Enter") {
+      e.preventDefault();
+      if (cmdItems[cmdSelected]) { cmdItems[cmdSelected].action(); closeCommandPalette(); }
+    } else if (e.key === "Escape") {
+      closeCommandPalette();
+    }
+  });
+
+  document.querySelectorAll("[data-close-palette]").forEach((el) => {
+    el.addEventListener("click", closeCommandPalette);
+  });
+
+  // ═══════════════ KEYBOARD SHORTCUTS ═══════════════
+  document.addEventListener("keydown", (e) => {
+    const meta = e.metaKey || e.ctrlKey;
+
+    if (meta && /^[1-5]$/.test(e.key)) {
+      e.preventDefault();
+      const idx = parseInt(e.key) - 1;
+      const map = ["tab-home", "tab-profile", "tab-dns", "tab-redirect", "tab-server"];
+      const target = document.getElementById(map[idx]);
+      if (target) switchTab(target);
+      return;
+    }
+
+    if (meta && e.key.toLowerCase() === "k") {
+      e.preventDefault();
+      if (cmdPalette && !cmdPalette.hidden) closeCommandPalette();
+      else openCommandPalette();
+      return;
+    }
+
+    if (meta && e.key === "Enter") {
+      const activeTab = document.querySelector(".tabs-content.active")?.id;
+      if (activeTab === "tab-content-home") { e.preventDefault(); performCheck(); }
+      else if (activeTab === "tab-content-redirect") { e.preventDefault(); processRedirectLinks(); }
+      else if (activeTab === "tab-content-server") {
+        e.preventDefault();
+        if (typeof window.processServerMapping === "function") window.processServerMapping();
+      }
+    }
+
+    if (e.key === "Escape" && cmdPalette && !cmdPalette.hidden) {
+      closeCommandPalette();
+    }
+  });
+
+  // ═══════════════ REDIRECT MODULE ═══════════════
   const redirectInput = document.getElementById("redirectUrlInput");
-  const redirectInputPanel = document.getElementById("redirectInputPanel");
   const redirectProcessButton = document.getElementById("redirectProcessButton");
   const redirectCopyAllButton = document.getElementById("redirectCopyAllButton");
   const redirectExportButton = document.getElementById("redirectExportButton");
@@ -87,43 +351,40 @@
   const redirectProgress = document.getElementById("redirectProgress");
   const redirectPreviewFrame = document.getElementById("redirectPreviewFrame");
   const redirectPreviewPlaceholder = document.getElementById("redirectPreviewPlaceholder");
+  const redirectActiveDomain = document.getElementById("redirectActiveDomain");
   const redirectActiveUrl = document.getElementById("redirectActiveUrl");
+  const redirectCount = document.getElementById("redirectCount");
   let redirectLinks = [];
   let activeRedirectPreview = null;
 
   function normalizeRedirectUrl(rawUrl) {
     const withProtocol = /^[a-z][a-z\d+.-]*:/i.test(rawUrl) ? rawUrl : `https://${rawUrl}`;
-    const parsedUrl = new URL(withProtocol);
-    if (parsedUrl.protocol !== "http:" && parsedUrl.protocol !== "https:") {
-      throw new Error("Hanya tautan HTTP atau HTTPS yang didukung.");
-    }
-    return parsedUrl.href;
+    const u = new URL(withProtocol);
+    if (u.protocol !== "http:" && u.protocol !== "https:") throw new Error("Hanya HTTP/HTTPS yang didukung.");
+    return u.href;
   }
 
   function renderRedirectLinks() {
     if (!redirectTableBody) return;
     redirectTableBody.replaceChildren();
+    if (redirectCount) redirectCount.textContent = `${redirectLinks.length} LINK${redirectLinks.length === 1 ? "" : "S"}`;
+
     if (activeRedirectPreview && !redirectLinks.includes(activeRedirectPreview)) {
       activeRedirectPreview = null;
-      if (redirectPreviewFrame) {
-        redirectPreviewFrame.removeAttribute("src");
-        redirectPreviewFrame.hidden = true;
-      }
+      if (redirectPreviewFrame) { redirectPreviewFrame.hidden = true; redirectPreviewFrame.removeAttribute("src"); }
       if (redirectPreviewPlaceholder) redirectPreviewPlaceholder.hidden = false;
-      if (redirectActiveUrl) {
-        redirectActiveUrl.textContent = "-";
-        redirectActiveUrl.title = "-";
-      }
+      if (redirectActiveUrl) { redirectActiveUrl.textContent = "Pilih domain dari daftar"; redirectActiveUrl.title = "-"; }
+      if (redirectActiveDomain) redirectActiveDomain.textContent = "Belum dipilih";
     }
 
     if (redirectLinks.length === 0) {
-      const emptyRow = document.createElement("tr");
-      const emptyCell = document.createElement("td");
-      emptyCell.colSpan = 3;
-      emptyCell.className = "redirect-empty";
-      emptyCell.textContent = "Belum ada link. Masukkan link lalu pilih Proses Daftar Link.";
-      emptyRow.appendChild(emptyCell);
-      redirectTableBody.appendChild(emptyRow);
+      const tr = document.createElement("tr");
+      const td = document.createElement("td");
+      td.colSpan = 3;
+      td.className = "redirect-empty";
+      td.innerHTML = `<div class="empty-state"><div class="empty-state-icon">◌</div><div class="empty-state-title">Belum ada link</div><div class="empty-state-desc">Masukkan link lalu pilih Proses Link.</div></div>`;
+      tr.appendChild(td);
+      redirectTableBody.appendChild(tr);
       return;
     }
 
@@ -131,33 +392,29 @@
       const row = document.createElement("tr");
       row.dataset.redirectIndex = String(index);
 
-      const numberCell = document.createElement("td");
-      numberCell.className = "redirect-row-number";
-      numberCell.textContent = String(index + 1);
+      const numCell = document.createElement("td");
+      numCell.className = "redirect-row-number";
+      numCell.textContent = String(index + 1);
 
       const urlCell = document.createElement("td");
       urlCell.className = "redirect-url-cell";
       if (link.url && link.domain) {
-        const domainStart = link.source.toLowerCase().indexOf(link.domain.toLowerCase());
-        if (domainStart >= 0) {
-          urlCell.append(
-            document.createTextNode(link.source.slice(0, domainStart)),
-            createRedirectDomainElement(link.domain, link.source.slice(domainStart, domainStart + link.domain.length)),
-            document.createTextNode(link.source.slice(domainStart + link.domain.length))
-          );
-        } else {
-          urlCell.append(
-            document.createTextNode(`${link.source} · `),
-            createRedirectDomainElement(link.domain, link.domain)
-          );
-        }
+        const src = document.createElement("span");
+        src.className = "redirect-url-source";
+        src.textContent = link.source;
+        src.title = link.source;
+        const dom = document.createElement("span");
+        dom.className = "redirect-domain-cell";
+        dom.setAttribute("role", "button");
+        dom.setAttribute("tabindex", "0");
+        dom.setAttribute("aria-label", `Pratinjau ${link.domain}`);
+        dom.dataset.domain = link.domain;
+        dom.textContent = link.domain;
+        urlCell.append(src, dom);
       } else {
         urlCell.textContent = link.source;
       }
-      if (link.error) {
-        urlCell.title = link.error;
-        urlCell.classList.add("redirect-invalid-url");
-      }
+      if (link.error) { urlCell.title = link.error; urlCell.classList.add("redirect-invalid-url"); }
 
       const actionsCell = document.createElement("td");
       actionsCell.className = "redirect-actions";
@@ -169,139 +426,112 @@
         openLink.rel = "noopener noreferrer";
         openLink.title = "Buka di tab baru";
         openLink.setAttribute("aria-label", `Buka ${link.source} di tab baru`);
-        openLink.innerHTML = '<svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M14 3h7v7"/><path d="M10 14 21 3"/><path d="M19 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V7a2 2 0 0 1 2-2h6"/></svg>';
+        openLink.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M14 3h7v7"/><path d="M10 14 21 3"/><path d="M19 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V7a2 2 0 0 1 2-2h6"/></svg>';
         actionsCell.appendChild(openLink);
       } else {
-        const errorMessage = document.createElement("span");
-        errorMessage.className = "redirect-error-label";
-        errorMessage.textContent = "URL tidak valid";
-        actionsCell.appendChild(errorMessage);
+        const err = document.createElement("span");
+        err.className = "redirect-error-label";
+        err.textContent = "invalid";
+        actionsCell.appendChild(err);
       }
 
-      const deleteButton = document.createElement("button");
-      deleteButton.type = "button";
-      deleteButton.className = "redirect-delete-button";
-      deleteButton.title = "Hapus";
-      deleteButton.setAttribute("aria-label", `Hapus baris ${index + 1}`);
-      deleteButton.innerHTML = '<svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M8 6V4h8v2"/><path d="m19 6-1 14H6L5 6"/><path d="M10 11v5M14 11v5"/></svg>';
-      deleteButton.addEventListener("click", () => {
+      const delBtn = document.createElement("button");
+      delBtn.type = "button";
+      delBtn.className = "redirect-delete-button";
+      delBtn.title = "Hapus";
+      delBtn.setAttribute("aria-label", `Hapus baris ${index + 1}`);
+      delBtn.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M8 6V4h8v2"/><path d="m19 6-1 14H6L5 6"/><path d="M10 11v5M14 11v5"/></svg>';
+      delBtn.addEventListener("click", () => {
         redirectLinks.splice(index, 1);
         renderRedirectLinks();
+        log(`Link #${index + 1} dihapus dari daftar.`, "warn");
       });
-      actionsCell.appendChild(deleteButton);
+      actionsCell.appendChild(delBtn);
 
-      row.append(numberCell, urlCell, actionsCell);
+      row.append(numCell, urlCell, actionsCell);
       if (activeRedirectPreview === link) row.classList.add("redirect-row-active");
       redirectTableBody.appendChild(row);
     });
   }
 
-  function createRedirectDomainElement(domain, displayText) {
-    const domainElement = document.createElement("span");
-    domainElement.className = "redirect-domain-cell";
-    domainElement.setAttribute("role", "button");
-    domainElement.setAttribute("tabindex", "0");
-    domainElement.setAttribute("aria-label", `Pratinjau halaman ${domain}. Tekan Ctrl+C untuk menyalin domain.`);
-    domainElement.dataset.domain = domain;
-    domainElement.textContent = displayText;
-    return domainElement;
-  }
-
   function processRedirectLinks() {
     if (!redirectInput || !redirectProgress) return;
-    const rawUrls = redirectInput.value.split(/\r?\n/).map((url) => url.trim()).filter(Boolean);
+    const rawUrls = redirectInput.value.split(/\r?\n/).map((u) => u.trim()).filter(Boolean);
     if (rawUrls.length === 0) {
-      redirectProgress.textContent = "Masukkan minimal satu link terlebih dahulu.";
+      redirectProgress.textContent = "Masukkan minimal satu link.";
+      log("Proses link dibatalkan: input kosong.", "warn");
       return;
     }
-
-    let invalidCount = 0;
+    let invalid = 0;
     redirectLinks = rawUrls.map((source) => {
       try {
         const url = normalizeRedirectUrl(source);
         return { source, url, domain: new URL(url).hostname, error: "" };
       } catch (error) {
-        invalidCount += 1;
-        return {
-          source,
-          url: "",
-          domain: "",
-          error: error instanceof Error ? error.message : "URL tidak valid.",
-        };
+        invalid++;
+        return { source, url: "", domain: "", error: error.message || "URL tidak valid." };
       }
     });
     renderRedirectLinks();
-    if (redirectInputPanel instanceof HTMLDetailsElement) redirectInputPanel.open = false;
-    redirectProgress.textContent = invalidCount
-      ? `${redirectLinks.length} link dimuat; ${invalidCount} link tidak valid.`
+    redirectProgress.textContent = invalid
+      ? `${redirectLinks.length} link dimuat, ${invalid} tidak valid.`
       : `Berhasil memuat ${redirectLinks.length} link.`;
+    log(`Redirect: ${redirectLinks.length} link diproses${invalid ? `, ${invalid} invalid` : ""}.`, invalid ? "warn" : "success");
   }
 
   function showRedirectPreview(link, activeRow) {
-    if (!link || !link.url || !redirectPreviewFrame || !redirectPreviewPlaceholder || !redirectActiveUrl) return;
+    if (!link?.url || !redirectPreviewFrame || !redirectPreviewPlaceholder || !redirectActiveUrl || !redirectActiveDomain) return;
     activeRedirectPreview = link;
-    redirectTableBody?.querySelectorAll("tr").forEach((row) => row.classList.remove("redirect-row-active"));
+    redirectTableBody?.querySelectorAll("tr").forEach((r) => r.classList.remove("redirect-row-active"));
+    redirectTableBody?.querySelectorAll(".redirect-domain-cell").forEach((d) => d.classList.remove("is-previewing"));
     activeRow?.classList.add("redirect-row-active");
+    const activeDomain = activeRow?.querySelector(".redirect-domain-cell");
+    if (activeDomain) { activeDomain.classList.remove("is-previewing"); void activeDomain.offsetWidth; activeDomain.classList.add("is-previewing"); }
     redirectPreviewPlaceholder.hidden = true;
     redirectPreviewFrame.hidden = false;
-    redirectPreviewFrame.src = link.url;
-    redirectActiveUrl.textContent = link.source;
-    redirectActiveUrl.title = link.source;
+    redirectActiveDomain.textContent = link.domain;
+    redirectActiveUrl.textContent = link.url;
+    redirectActiveUrl.title = link.url;
+    redirectPreviewFrame.src = "about:blank";
+    window.requestAnimationFrame(() => {
+      if (activeRedirectPreview === link && !redirectPreviewFrame.hidden) redirectPreviewFrame.src = link.url;
+    });
+    log(`Preview: ${link.domain}`, "info");
+  }
+
+  function previewFocusedRedirectDomain(domainEl) {
+    const row = domainEl.closest("tr");
+    const link = redirectLinks[Number(row?.dataset.redirectIndex)];
+    if (link) showRedirectPreview(link, row);
   }
 
   function exportRedirectLinks() {
-    const validLinks = redirectLinks.filter((link) => link.url);
-    if (validLinks.length === 0) {
-      if (redirectProgress) redirectProgress.textContent = "Tidak ada link valid untuk diekspor.";
-      return;
-    }
-
-    const csvEscape = (value) => `"${value.replace(/"/g, '""')}"`;
-    const csv = ["URL Asal", ...validLinks.map((link) => csvEscape(link.source))].join("\r\n");
-    const blobUrl = URL.createObjectURL(new Blob(["\uFEFF", csv], { type: "text/csv;charset=utf-8" }));
-    const downloadLink = document.createElement("a");
-    downloadLink.href = blobUrl;
-    downloadLink.download = "daftar-link.csv";
-    downloadLink.click();
-    window.setTimeout(() => URL.revokeObjectURL(blobUrl), 1000);
+    const valid = redirectLinks.filter((l) => l.url);
+    if (valid.length === 0) { if (redirectProgress) redirectProgress.textContent = "Tidak ada link valid untuk diekspor."; return; }
+    const esc = (v) => `"${v.replace(/"/g, '""')}"`;
+    const csv = [["URL Asal", "Domain"].map(esc).join(","), ...valid.map((l) => [l.source, l.domain].map(esc).join(","))].join("\r\n");
+    const url = URL.createObjectURL(new Blob(["\uFEFF", csv], { type: "text/csv;charset=utf-8" }));
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = "daftar-link.csv";
+    a.click();
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
+    log(`Ekspor CSV: ${valid.length} link`, "success");
   }
 
   async function copyAllRedirectLinks() {
-    if (!redirectProgress || redirectLinks.length === 0) {
-      if (redirectProgress) redirectProgress.textContent = "Belum ada domain untuk disalin.";
-      return;
-    }
-
-    const textToCopy = redirectLinks.map((link) => link.source).join("\n");
+    const domains = redirectLinks.filter((l) => l.domain).map((l) => l.domain);
+    if (!redirectProgress || domains.length === 0) { if (redirectProgress) redirectProgress.textContent = "Belum ada domain untuk disalin."; return; }
+    const text = domains.join("\n");
     try {
-      if (!navigator.clipboard?.writeText) {
-        throw new Error("Clipboard API tidak tersedia.");
-      }
-      await navigator.clipboard.writeText(textToCopy);
-      redirectProgress.textContent = `Berhasil menyalin ${redirectLinks.length} domain.`;
-    } catch (error) {
-      const temporaryInput = document.createElement("textarea");
-      temporaryInput.value = textToCopy;
-      temporaryInput.setAttribute("readonly", "");
-      temporaryInput.style.position = "fixed";
-      temporaryInput.style.left = "-9999px";
-      document.body.appendChild(temporaryInput);
-      let copied = false;
-      try {
-        temporaryInput.select();
-        copied = document.execCommand("copy");
-      } catch (fallbackError) {
-        console.error("Clipboard fallback failed.", fallbackError);
-      } finally {
-        temporaryInput.remove();
-      }
-
-      if (!copied) {
-        redirectProgress.textContent = "Gagal menyalin domain. Silakan salin manual dari tabel.";
-        console.error("Unable to copy redirect links.", error);
-        return;
-      }
-      redirectProgress.textContent = `Berhasil menyalin ${redirectLinks.length} domain.`;
+      if (!navigator.clipboard?.writeText) throw new Error("no clipboard");
+      await navigator.clipboard.writeText(text);
+      redirectProgress.textContent = `Berhasil menyalin ${domains.length} domain.`;
+      showFeedback(`✅ ${domains.length} domain disalin`);
+      log(`Redirect copy: ${domains.length} domain`, "success");
+    } catch {
+      fallbackCopy(text);
+      redirectProgress.textContent = `Berhasil menyalin ${domains.length} domain.`;
     }
   }
 
@@ -309,9 +539,7 @@
   redirectProcessButton?.addEventListener("click", processRedirectLinks);
   redirectExportButton?.addEventListener("click", exportRedirectLinks);
 
-  // ==========================================
-  // 2. RULES PENGELOMPOKAN DOMAIN (Tab: Filter Domain)
-  // ==========================================
+  // ═══════════════ BRAND RULES ═══════════════
   const rules = [
     { brand: "WDBOS", keywords: ["wdbos", "wdb"] },
     { brand: "BOSJOKO", keywords: ["bosjoko", "bosjo"] },
@@ -369,281 +597,207 @@
 
   const domainInputEl = document.getElementById("domainInput");
   const outputEl = document.getElementById("output");
+  const groupCount = document.getElementById("groupCount");
 
   domainInputEl?.addEventListener("input", () => {
-    const rawdomains = domainInputEl.value
-      .split(/[\n,\s]+/)
-      .map((d) => d.trim().toLowerCase())
-      .filter((d) => d.length > 0);
-
+    const rawdomains = domainInputEl.value.split(/[\n,\s]+/).map((d) => d.trim().toLowerCase()).filter((d) => d.length > 0);
     const grouped = {};
     rules.forEach((r) => (grouped[r.brand] = []));
 
     rawdomains.forEach((domain) => {
       const domainLower = String(domain).toLowerCase();
-      let matchedRule = null;
-      let longestKeyword = "";
-
+      let matched = null, longest = "";
       for (const rule of rules) {
         for (const kw of rule.keywords || []) {
           const keyword = String(kw).toLowerCase().trim();
-          if (
-            keyword &&
-            domainLower.includes(keyword) &&
-            keyword.length > longestKeyword.length
-          ) {
-            longestKeyword = keyword;
-            matchedRule = rule;
+          if (keyword && domainLower.includes(keyword) && keyword.length > longest.length) {
+            longest = keyword; matched = rule;
           }
         }
       }
-
-      if (matchedRule) {
-        grouped[matchedRule.brand].push(domain);
-      }
+      if (matched) grouped[matched.brand].push(domain);
     });
 
     outputEl.innerHTML = "";
+    let brandCount = 0;
     for (const [brand, domains] of Object.entries(grouped)) {
       if (domains.length > 0) {
-        let html = `<div class="brand-group"><div class="brand-header">${brand}</div>`;
-        domains.forEach((d) => {
-          html += `<div class="domain-item">${d}</div>`;
-        });
+        brandCount++;
+        let html = `<div class="brand-group"><div class="brand-header">${escapeHtml(brand)}</div>`;
+        domains.forEach((d) => { html += `<div class="domain-item">${escapeHtml(d)}</div>`; });
         html += `</div>`;
         outputEl.innerHTML += html;
       }
     }
+    if (brandCount === 0) {
+      outputEl.innerHTML = `<div class="empty-state"><div class="empty-state-icon">◌</div><div class="empty-state-title">Belum ada data</div><div class="empty-state-desc">Domain akan muncul otomatis di sini.</div></div>`;
+    }
+    if (groupCount) groupCount.textContent = `${brandCount} BRAND${brandCount === 1 ? "" : "S"}`;
   });
 
-  function copyToClipboard(text, buttonElement) {
+  function copyToClipboard(text, btn) {
     if (!text) return;
-    navigator.clipboard
-      .writeText(text)
-      .then(() => {
-        if (buttonElement) {
-          const originalText = buttonElement.innerText;
-          buttonElement.innerText = "Copied!";
-          setTimeout(() => {
-            buttonElement.innerText = originalText;
-          }, 2000);
-        }
-      })
-      .catch((err) => {
-        console.error("Gagal menyalin teks: ", err);
-      });
+    navigator.clipboard.writeText(text).then(() => {
+      if (btn) {
+        const orig = btn.innerHTML;
+        btn.innerHTML = "✓ Copied";
+        setTimeout(() => { btn.innerHTML = orig; }, 1800);
+      }
+      showFeedback("✅ Disalin ke clipboard");
+      log("Copy to clipboard successful.", "success");
+    }).catch((err) => {
+      log(`Copy failed: ${err.message}`, "error");
+      fallbackCopy(text);
+    });
   }
 
-  const btnCopyOutput = document.getElementById("btn-copy-output");
-  btnCopyOutput?.addEventListener("click", () => {
+  document.getElementById("btn-copy-output")?.addEventListener("click", () => {
     if (!outputEl) return;
-    const brandGroups = outputEl.querySelectorAll(".brand-group");
-    if (brandGroups.length === 0) return;
-
-    let formattedText = "";
-    brandGroups.forEach((group) => {
-      const brandHeader = group.querySelector(".brand-header");
-      const brandName = brandHeader
-        ? (brandHeader.textContent || brandHeader.innerText).trim()
-        : "BRAND";
-      const domainItems = group.querySelectorAll(".domain-item");
-      const domains = Array.from(domainItems).map((item) =>
-        (item.textContent || item.innerText).trim(),
-      );
-      if (brandName && domains.length > 0) {
-        formattedText += `[${brandName}]\n`;
-        formattedText += domains.join("\n") + "\n\n";
-      }
+    const groups = outputEl.querySelectorAll(".brand-group");
+    if (groups.length === 0) return;
+    let text = "";
+    groups.forEach((g) => {
+      const brand = g.querySelector(".brand-header")?.textContent.trim() || "BRAND";
+      const domains = Array.from(g.querySelectorAll(".domain-item")).map((el) => el.textContent.trim());
+      if (brand && domains.length) { text += `[${brand}]\n${domains.join("\n")}\n\n`; }
     });
-
-    copyToClipboard(formattedText.trim(), btnCopyOutput);
+    copyToClipboard(text.trim(), document.getElementById("btn-copy-output"));
   });
 
-  // ==========================================
-  // 3. PARSER CEK PERGANTIAN DOMAIN
-  // ==========================================
+  // ═══════════════ CHECKER ═══════════════
   function parseDataByBrand(text) {
     if (!text || typeof text !== "string") return new Map();
-
     const lines = text.split("\n");
-    const brandsMap = new Map();
-    let currentBrand = " UMUM";
+    const map = new Map();
+    let current = " UMUM";
+    map.set(current, []);
+    const aliases = { "DDT": "DINGDONGTOGEL" };
 
-    brandsMap.set(currentBrand, []);
-
-    const brandAliases = {
-      "DDT": "DINGDONGTOGEL"
-    };
-
-    for (let rawLine of lines) {
-      let line = rawLine.trim();
+    for (let raw of lines) {
+      let line = raw.trim();
       if (!line) continue;
-
-      const attachedMatch = line.match(/^([A-Z0-9\s]+?)([a-z0-9\-]+\.[a-z]{2,})$/);
-      if (attachedMatch && !line.startsWith("[")) {
-        let potentialBrand = attachedMatch[1].trim().toUpperCase();
-        const potentialDomain = attachedMatch[2].trim().toLowerCase();
-        
-        if (potentialBrand && potentialBrand.length <= 15) {
-          currentBrand = brandAliases[potentialBrand] || potentialBrand;
-          if (!brandsMap.has(currentBrand)) brandsMap.set(currentBrand, []);
-          brandsMap.get(currentBrand).push(potentialDomain);
+      const attached = line.match(/^([A-Z0-9\s]+?)([a-z0-9\-]+\.[a-z]{2,})$/);
+      if (attached && !line.startsWith("[")) {
+        const brand = attached[1].trim().toUpperCase();
+        const domain = attached[2].trim().toLowerCase();
+        if (brand && brand.length <= 15) {
+          current = aliases[brand] || brand;
+          if (!map.has(current)) map.set(current, []);
+          map.get(current).push(domain);
           continue;
         }
       }
-
-      const isBracketBrand = line.startsWith("[") && line.endsWith("]");
-      const isNotDomain = !line.includes(".");
-
-      if (isBracketBrand || isNotDomain) {
-        let cleanBrandName = line.replace(/[\[\]]/g, "").trim().toUpperCase();
-        currentBrand = brandAliases[cleanBrandName] || cleanBrandName;
-        if (!brandsMap.has(currentBrand)) brandsMap.set(currentBrand, []);
+      const isBracket = line.startsWith("[") && line.endsWith("]");
+      const noDot = !line.includes(".");
+      if (isBracket || noDot) {
+        const clean = line.replace(/[\[\]]/g, "").trim().toUpperCase();
+        current = aliases[clean] || clean;
+        if (!map.has(current)) map.set(current, []);
         continue;
       }
-
-      const cleanDomain = line
-        .toLowerCase()
-        .replace(/^https?:\/\//i, "")
-        .replace(/^www\./i, "")
-        .split("/")[0]
-        .trim();
-
+      const cleanDomain = line.toLowerCase().replace(/^https?:\/\//i, "").replace(/^www\./i, "").split("/")[0].trim();
       if (cleanDomain && cleanDomain.includes(".")) {
-        if (!brandsMap.has(currentBrand)) brandsMap.set(currentBrand, []);
-        const list = brandsMap.get(currentBrand);
-        if (!list.includes(cleanDomain)) {
-          list.push(cleanDomain);
-        }
+        if (!map.has(current)) map.set(current, []);
+        const list = map.get(current);
+        if (!list.includes(cleanDomain)) list.push(cleanDomain);
       }
     }
-
-    if (brandsMap.has(" UMUM") && brandsMap.get(" UMUM").length === 0) {
-      brandsMap.delete(" UMUM");
-    }
-
-    return brandsMap;
+    if (map.has(" UMUM") && map.get(" UMUM").length === 0) map.delete(" UMUM");
+    return map;
   }
 
-  // ==========================================
-  // 4. CORE COMPARATOR
-  // ==========================================
   function compareData(oldText, newText) {
     const oldMap = parseDataByBrand(oldText);
     const newMap = parseDataByBrand(newText);
-
-    let totalOld = 0;
-    let totalNew = 0;
-    oldMap.forEach((list) => (totalOld += list.length));
-    newMap.forEach((list) => (totalNew += list.length));
-
-    let isValid = true;
-    const brandReports = [];
-
-    function getDomainType(domain) {
-      const d = domain.toLowerCase();
-      if (d.includes("rtp")) return "RTP";
-      if (d.includes("-amp") || d.includes("amp")) return "AMP";
-      if (d.includes("-blog") || d.includes("blog")) return "BLOG";
+    let totalOld = 0, totalNew = 0;
+    oldMap.forEach((l) => totalOld += l.length);
+    newMap.forEach((l) => totalNew += l.length);
+    let valid = true;
+    const reports = [];
+    const getType = (d) => {
+      const x = d.toLowerCase();
+      if (x.includes("rtp")) return "RTP";
+      if (x.includes("-amp") || x.includes("amp")) return "AMP";
+      if (x.includes("-blog") || x.includes("blog")) return "BLOG";
       return "NORMAL / ANGKA";
-    }
-
+    };
     const allBrands = new Set([...oldMap.keys(), ...newMap.keys()]);
-
     allBrands.forEach((brand) => {
-      if (brand === "UNKNOWN" && oldMap.get(brand)?.length === 0 && newMap.get(brand)?.length === 0) return;
-
-      const oldDomains = oldMap.get(brand) || [];
-      const newDomains = newMap.get(brand) || [];
-
-      const countOld = oldDomains.length;
-      const countNew = newDomains.length;
-
-      const oldTypes = { AMP: 0, BLOG: 0, RTP: 0, "NORMAL / ANGKA": 0 };
-      oldDomains.forEach(d => oldTypes[getDomainType(d)]++);
-
-      const newTypes = { AMP: 0, BLOG: 0, RTP: 0, "NORMAL / ANGKA": 0 };
-      newDomains.forEach(d => newTypes[getDomainType(d)]++);
-
-      let brandMatch = (countOld === countNew);
-      if (brandMatch) {
-        if (oldTypes.AMP !== newTypes.AMP || 
-            oldTypes.BLOG !== newTypes.BLOG || 
-            oldTypes.RTP !== newTypes.RTP ||
-            oldTypes["NORMAL / ANGKA"] !== newTypes["NORMAL / ANGKA"]) {
-          brandMatch = false;
-        }
+      const oldD = oldMap.get(brand) || [];
+      const newD = newMap.get(brand) || [];
+      const oldT = { AMP: 0, BLOG: 0, RTP: 0, "NORMAL / ANGKA": 0 };
+      const newT = { AMP: 0, BLOG: 0, RTP: 0, "NORMAL / ANGKA": 0 };
+      oldD.forEach((d) => oldT[getType(d)]++);
+      newD.forEach((d) => newT[getType(d)]++);
+      let match = oldD.length === newD.length;
+      if (match) {
+        if (oldT.AMP !== newT.AMP || oldT.BLOG !== newT.BLOG || oldT.RTP !== newT.RTP || oldT["NORMAL / ANGKA"] !== newT["NORMAL / ANGKA"]) match = false;
       }
-
-      if (!brandMatch) {
-        isValid = false;
-      }
-
-      brandReports.push({
-        brand,
-        brandMatch,
-        totalOld: countOld,
-        totalNew: countNew,
-        oldTypes,
-        newTypes
-      });
+      if (!match) valid = false;
+      reports.push({ brand, match, oldT, newT, oldCount: oldD.length, newCount: newD.length });
     });
-
-    brandReports.sort((a, b) => a.brand.localeCompare(b.brand));
-
-    return { isValid, totalOld, totalNew, brandReports };
+    reports.sort((a, b) => a.brand.localeCompare(b.brand));
+    return { valid, totalOld, totalNew, reports };
   }
 
-  // ==========================================
-  // 5. RENDER HASIL
-  // ==========================================
   function renderResult(result) {
     const statusDiv = document.getElementById("statusContainer");
     const reportDiv = document.getElementById("reportContainer");
+    const subtitle = document.getElementById("resultSubtitle");
+    const kpiStatus = document.getElementById("kpiStatus");
+    const kpiStatusSub = document.getElementById("kpiStatusSub");
+    const kpiStatusDot = document.getElementById("kpiStatusDot");
+    const kpiOld = document.getElementById("kpiOld");
+    const kpiNew = document.getElementById("kpiNew");
+    const kpiBrands = document.getElementById("kpiBrands");
     if (!statusDiv || !reportDiv) return;
 
     if (!result) {
       statusDiv.replaceChildren();
-      reportDiv.innerHTML = '<div style="color: var(--text-secondary); padding: 12px 0;">Silakan masukkan data lama dan data baru, lalu klik CEK PERGANTIAN.</div>';
+      reportDiv.innerHTML = `<div class="empty-state"><div class="empty-state-icon">◌</div><div class="empty-state-title">Siap menerima data</div><div class="empty-state-desc">Masukkan data lama dan baru, lalu jalankan cek.</div></div>`;
+      if (subtitle) subtitle.textContent = "Belum ada hasil";
+      if (kpiStatus) { kpiStatus.textContent = "IDLE"; kpiStatus.classList.remove("valid", "invalid"); }
+      if (kpiStatusSub) kpiStatusSub.textContent = "Menunggu data";
+      if (kpiStatusDot) kpiStatusDot.className = "kpi-dot";
+      if (kpiOld) kpiOld.textContent = "0";
+      if (kpiNew) kpiNew.textContent = "0";
+      if (kpiBrands) kpiBrands.textContent = "0";
       return;
     }
 
-    if (result.isValid) {
-      statusDiv.innerHTML = '<span class="status-badge valid">✅ SEMUA JENIS & JUMLAH DOMAIN SESUAI</span>';
+    if (result.valid) {
+      statusDiv.innerHTML = '<span class="status-badge valid">✓ SEMUA JENIS & JUMLAH DOMAIN SESUAI</span>';
+      if (kpiStatus) { kpiStatus.textContent = "VALID"; kpiStatus.classList.add("valid"); kpiStatus.classList.remove("invalid"); }
+      if (kpiStatusSub) kpiStatusSub.textContent = "Semua brand cocok";
+      if (kpiStatusDot) kpiStatusDot.className = "kpi-dot valid";
+      log(`Verify: PASS — ${result.totalOld} → ${result.totalNew} domains matched.`, "success");
     } else {
-      statusDiv.innerHTML = '<span class="status-badge invalid">❌ ADA JUMLAH ATAU JENIS LINK YANG MELENCENG</span>';
+      statusDiv.innerHTML = '<span class="status-badge invalid">✗ ADA JUMLAH ATAU JENIS LINK YANG MELENCENG</span>';
+      if (kpiStatus) { kpiStatus.textContent = "FAIL"; kpiStatus.classList.add("invalid"); kpiStatus.classList.remove("valid"); }
+      if (kpiStatusSub) kpiStatusSub.textContent = "Ada mismatch";
+      if (kpiStatusDot) kpiStatusDot.className = "kpi-dot invalid";
+      log(`Verify: FAIL — ada mismatch pada brand/jumlah.`, "error");
     }
+    if (subtitle) subtitle.textContent = `${result.reports.length} brand dianalisis`;
+    if (kpiOld) kpiOld.textContent = String(result.totalOld);
+    if (kpiNew) kpiNew.textContent = String(result.totalNew);
+    if (kpiBrands) kpiBrands.textContent = String(result.reports.length);
 
-    let html = `
-      <div class="total-domain" style="margin-bottom: 16px; font-family: var(--font-mono); display: flex; gap: 24px; padding: 12px 16px; background: var(--bg-tertiary); border-radius: 8px;">
-        <span>Total Data Lama : <strong>${result.totalOld}</strong></span>
-        <span>Total Pengganti : <strong>${result.totalNew}</strong></span>
-      </div>
-      <div class="detail-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 12px;">
-    `;
-
-    result.brandReports.forEach((b) => {
-      const cardClass = b.brandMatch ? "match" : "mismatch";
-      const icon = b.brandMatch ? "✅" : "❌";
-      
-      const detailColor = b.brandMatch ? "var(--text-secondary)" : "var(--accent-red)";
-      const detailWeight = b.brandMatch ? "normal" : "bold";
-
-      html += `
-        <div class="brand-report ${cardClass}" style="padding: 12px 16px; border-radius: 8px; background: var(--bg-card); border: 1px solid var(--border-primary);">
-          <div style="display: flex; justify-content: space-between; align-items: center; font-family: var(--font-mono); font-size: 13px; margin-bottom: 6px;">
-            <span>${icon} <strong>${escapeHtml(b.brand)}</strong></span>
-            <span style="color: ${b.brandMatch ? 'var(--accent-teal)' : 'var(--accent-red)'}; font-weight: bold;">
-              Total: ${b.totalOld} → ${b.totalNew}
-            </span>
-          </div>
-          <div style="font-size: 11px; color: ${detailColor}; font-weight: ${detailWeight}; font-family: var(--font-mono);">
-            AMP: ${b.oldTypes.AMP}→${b.newTypes.AMP} | Blog: ${b.oldTypes.BLOG}→${b.newTypes.BLOG} | RTP: ${b.oldTypes.RTP}→${b.newTypes.RTP} | Normal: ${b.oldTypes["NORMAL / ANGKA"]}→${b.newTypes["NORMAL / ANGKA"]}
-          </div>
+    let html = `<div class="total-domain"><span>Total Lama: <strong>${result.totalOld}</strong></span><span>Total Baru: <strong>${result.totalNew}</strong></span></div><div class="detail-grid">`;
+    result.reports.forEach((b) => {
+      const cls = b.match ? "match" : "mismatch";
+      const icon = b.match ? "✓" : "✗";
+      const color = b.match ? "var(--c-green)" : "var(--c-red)";
+      html += `<div class="brand-report ${cls}">
+        <div style="display:flex;justify-content:space-between;align-items:center;font-family:var(--font-mono);font-size:12.5px;margin-bottom:6px;">
+          <span>${icon} <strong style="color:var(--t-bright);">${escapeHtml(b.brand)}</strong></span>
+          <span style="color:${color};font-weight:600;">${b.oldCount} → ${b.newCount}</span>
         </div>
-      `;
+        <div style="font-size:10.5px;color:${b.match ? 'var(--t-muted)' : color};font-family:var(--font-mono);">
+          AMP: ${b.oldT.AMP}→${b.newT.AMP} · Blog: ${b.oldT.BLOG}→${b.newT.BLOG} · RTP: ${b.oldT.RTP}→${b.newT.RTP} · Normal: ${b.oldT["NORMAL / ANGKA"]}→${b.newT["NORMAL / ANGKA"]}
+        </div>
+      </div>`;
     });
-
     html += `</div>`;
     reportDiv.innerHTML = html;
   }
@@ -651,184 +805,118 @@
   function performCheck() {
     const oldText = document.getElementById("oldData")?.value || "";
     const newText = document.getElementById("newData")?.value || "";
-
-    if (!oldText.trim() && !newText.trim()) {
-      alert("Harap isi kedua kolom data lama dan baru!");
-      return;
-    }
-
+    if (!oldText.trim() && !newText.trim()) { alert("Harap isi data lama dan baru!"); return; }
+    log("Running verify...", "info");
     const result = compareData(oldText, newText);
     renderResult(result);
   }
 
   function resetChecker() {
-    const oldInput = document.getElementById("oldData");
-    const newInput = document.getElementById("newData");
-    if (oldInput) oldInput.value = "";
-    if (newInput) newInput.value = "";
+    const o = document.getElementById("oldData"), n = document.getElementById("newData");
+    if (o) o.value = ""; if (n) n.value = "";
     renderResult(null);
+    log("Checker direset.", "warn");
   }
 
   document.getElementById("checkBtn")?.addEventListener("click", performCheck);
   document.getElementById("resetBtn")?.addEventListener("click", resetChecker);
-
   renderResult(null);
 
-  // ==========================================
-  // 6. DNS PARSER (Tab: DNS)
-  // ==========================================
+  // ═══════════════ DNS PARSER ═══════════════
   const inputData = document.getElementById("inputData");
   const resultTable = document.getElementById("resultTable");
   const rowCount = document.getElementById("rowCount");
-  const feedback = document.getElementById("copyFeedback");
+  const inputLineCount = document.getElementById("inputLineCount");
+  const bulkCount = document.getElementById("bulkCount");
 
   let processedDomains = [];
   let processedNS = [];
   let lastFocusedCell = null;
-  let isProcessing = false;
   let renderTimeout = null;
 
   function processData() {
-    if (isProcessing) return;
-    isProcessing = true;
+    if (!inputData) return;
+    const text = inputData.value;
+    const lines = text.split("\n");
+    if (inputLineCount) inputLineCount.textContent = `${lines.filter((l) => l.trim()).length} lines`;
 
-    if (renderTimeout) {
-      clearTimeout(renderTimeout);
-      renderTimeout = null;
-    }
-
+    if (renderTimeout) clearTimeout(renderTimeout);
     renderTimeout = setTimeout(() => {
-      try {
-        const text = inputData.value;
-        const lines = text
-          .split("\n")
-          .map((l) => l.trim())
-          .filter((l) => l !== "");
-
-        let tempDomains = [];
-        let tempNS = [];
-        let rawPairs = [];
-
-        for (let i = 0; i < lines.length; i++) {
-          const line = lines[i];
-          const lineLower = line.toLowerCase();
-          const isNS = lineLower.includes(".ns.") || 
-                       lineLower.includes("ns.cloudflare") ||
-                       (lineLower.includes("ns") && lineLower.split(".").length > 2);
-          const isDomain = !isNS && line.includes(".") && !lineLower.includes("http") && line.split(" ").length === 1;
-
-          if (isDomain) {
-            if (tempNS.length > 0 && tempDomains.length > 0) {
-              tempDomains.forEach(d => {
-                rawPairs.push({ domain: d, ns: tempNS.join(",") });
-              });
-              tempDomains = [];
-              tempNS = [];
-            }
-            tempDomains.push(line);
-          } else if (isNS) {
-            tempNS.push(line);
+      const clean = lines.map((l) => l.trim()).filter(Boolean);
+      let tempDomains = [], tempNS = [], rawPairs = [];
+      for (const line of clean) {
+        const ll = line.toLowerCase();
+        const isNS = ll.includes(".ns.") || ll.includes("ns.cloudflare") || (ll.includes("ns") && ll.split(".").length > 2);
+        const isDomain = !isNS && line.includes(".") && !ll.includes("http") && line.split(" ").length === 1;
+        if (isDomain) {
+          if (tempNS.length > 0 && tempDomains.length > 0) {
+            tempDomains.forEach((d) => rawPairs.push({ domain: d, ns: tempNS.join(",") }));
+            tempDomains = []; tempNS = [];
           }
-        }
-
-        if (tempDomains.length > 0) {
-          const joinedNS = tempNS.length > 0 ? tempNS.join(",") : "";
-          tempDomains.forEach(d => {
-            rawPairs.push({ domain: d, ns: joinedNS });
-          });
-        }
-
-        const dnsGroups = {};
-        rawPairs.forEach(pair => {
-          const key = pair.ns.trim().toLowerCase();
-          if (!key) return;
-          if (!dnsGroups[key]) {
-            dnsGroups[key] = {
-              originalNS: pair.ns,
-              domains: []
-            };
-          }
-          if (!dnsGroups[key].domains.includes(pair.domain)) {
-            dnsGroups[key].domains.push(pair.domain);
-          }
-        });
-
-        const bulkGroups = [];
-        const normalPairs = [];
-
-        Object.keys(dnsGroups).forEach(key => {
-          const group = dnsGroups[key];
-          if (group.domains.length > 1) {
-            bulkGroups.push(group);
-          } else {
-            normalPairs.push({ domain: group.domains[0], ns: group.originalNS });
-          }
-        });
-
-        processedDomains = normalPairs.map(p => p.domain);
-        processedNS = normalPairs.map(p => p.ns);
-        renderTable(); 
-
-        renderDynamicBulkContainers(bulkGroups);
-
-      } catch (error) {
-        console.error("Error processing data:", error);
-      } finally {
-        isProcessing = false;
-        renderTimeout = null;
+          tempDomains.push(line);
+        } else if (isNS) { tempNS.push(line); }
       }
-    }, 300);
+      if (tempDomains.length > 0) {
+        const joined = tempNS.length > 0 ? tempNS.join(",") : "";
+        tempDomains.forEach((d) => rawPairs.push({ domain: d, ns: joined }));
+      }
+
+      const groups = {};
+      rawPairs.forEach((p) => {
+        const k = p.ns.trim().toLowerCase();
+        if (!k) return;
+        if (!groups[k]) groups[k] = { originalNS: p.ns, domains: [] };
+        if (!groups[k].domains.includes(p.domain)) groups[k].domains.push(p.domain);
+      });
+
+      const bulk = [], normal = [];
+      Object.keys(groups).forEach((k) => {
+        const g = groups[k];
+        if (g.domains.length > 1) bulk.push(g);
+        else normal.push({ domain: g.domains[0], ns: g.originalNS });
+      });
+
+      processedDomains = normal.map((p) => p.domain);
+      processedNS = normal.map((p) => p.ns);
+      renderTable();
+      renderBulk(bulk);
+      if (bulkCount) bulkCount.textContent = `${bulk.length} GROUP${bulk.length === 1 ? "" : "S"}`;
+    }, 200);
   }
 
-  function renderDynamicBulkContainers(groups) {
-    const container = document.getElementById('bulkResultContainer');
+  function renderBulk(groups) {
+    const container = document.getElementById("bulkResultContainer");
     if (!container) return;
-
     if (groups.length === 0) {
-      container.innerHTML = '<span style="color: var(--text-tertiary); font-style: italic; font-family: var(--font-mono); font-size: 12px;">Belum ada data massal...</span>';
+      container.innerHTML = `<div class="empty-state empty-state-inline"><div class="empty-state-icon">◌</div><div class="empty-state-title">Belum ada grup massal</div><div class="empty-state-desc">Domain dengan NS yang sama (≥2) akan muncul di sini.</div></div>`;
       return;
     }
-
-    let html = '';
-    groups.forEach((group, index) => {
-      html += `
-        <div class="dynamic-bulk-card">
-          <div class="dynamic-bulk-header">
-            🖥️ NS: ${escapeHtml(group.originalNS)}
-          </div>
-          <div class="dynamic-bulk-domains">
-            ${group.domains.map(d => `<div>${escapeHtml(d)}</div>`).join('')}
-          </div>
-          <div class="dynamic-bulk-actions">
-            <button class="btn-bulk-action btn-bulk-copy-all btn-copy-dynamic-bulk" data-group-index="${index}">
-              📋 Copy Domain Saja (${group.domains.length})
-            </button>
-            <button class="btn-bulk-action btn-bulk-copy-ns btn-copy-ns-only" data-ns="${escapeHtml(group.originalNS)}">
-              📋 Copy NS Saja
-            </button>
-          </div>
+    let html = "";
+    groups.forEach((g, i) => {
+      html += `<div class="dynamic-bulk-card">
+        <div class="dynamic-bulk-header">🖥 NS: ${escapeHtml(g.originalNS)}</div>
+        <div class="dynamic-bulk-domains">${g.domains.map((d) => `<div>${escapeHtml(d)}</div>`).join("")}</div>
+        <div class="dynamic-bulk-actions">
+          <button class="btn-bulk-action" data-copy-domains="${i}">⎘ Copy ${g.domains.length} Domain</button>
+          <button class="btn-bulk-action" data-copy-ns="${escapeHtml(g.originalNS)}">⎘ Copy NS</button>
         </div>
-      `;
+      </div>`;
     });
-
     container.innerHTML = html;
-
-    container.querySelectorAll('.btn-copy-dynamic-bulk').forEach((btn, idx) => {
-      btn.addEventListener('click', () => {
-        const targetGroup = groups[idx];
-        const textToCopy = targetGroup.domains.join('\n');
-        
-        navigator.clipboard.writeText(textToCopy).then(() => {
-          showFeedback(`✅ Berhasil menyalin ${targetGroup.domains.length} domain!`, "#34d399");
+    container.querySelectorAll("[data-copy-domains]").forEach((btn) => {
+      btn.addEventListener("click", () => {
+        const g = groups[Number(btn.dataset.copyDomains)];
+        navigator.clipboard.writeText(g.domains.join("\n")).then(() => {
+          showFeedback(`✅ ${g.domains.length} domain disalin`);
+          log(`Bulk copy: ${g.domains.length} domains`, "success");
         });
       });
     });
-
-    container.querySelectorAll('.btn-copy-ns-only').forEach((btn) => {
-      btn.addEventListener('click', () => {
-        const nsText = btn.getAttribute('data-ns');
-        navigator.clipboard.writeText(nsText).then(() => {
-          showFeedback(`✅ NS berhasil disalin!`, "#34d399");
+    container.querySelectorAll("[data-copy-ns]").forEach((btn) => {
+      btn.addEventListener("click", () => {
+        navigator.clipboard.writeText(btn.dataset.copyNs).then(() => {
+          showFeedback("✅ NS disalin");
+          log("NS copied.", "success");
         });
       });
     });
@@ -836,560 +924,268 @@
 
   function renderTable() {
     const count = processedDomains.length;
-    rowCount.textContent = count;
-
+    if (rowCount) rowCount.textContent = count;
     if (count === 0) {
-      resultTable.innerHTML = `<tr><td class="empty-msg" colspan="3">Data akan muncul di sini...</td></tr>`;
+      resultTable.innerHTML = `<tr><td class="empty-msg" colspan="3"><div class="empty-state"><div class="empty-state-icon">◌</div><div class="empty-state-title">Belum ada data</div><div class="empty-state-desc">Tempel data di kolom sebelah kiri.</div></div></td></tr>`;
       lastFocusedCell = null;
       return;
     }
-
-    const fragment = document.createDocumentFragment();
-    
+    const frag = document.createDocumentFragment();
     for (let i = 0; i < count; i++) {
-      const rowNum = i + 1;
-      const domain = escapeHtml(processedDomains[i] || "");
-      const ns = escapeHtml(processedNS[i] || "");
-      
       const tr = document.createElement("tr");
-      
-      const tdNum = document.createElement("td");
-      tdNum.className = "row-number";
-      tdNum.textContent = rowNum;
-      tr.appendChild(tdNum);
-      
-      const tdDomain = document.createElement("td");
-      tdDomain.className = "domain-cell domain-highlight";
-      tdDomain.setAttribute("tabindex", "0");
-      tdDomain.setAttribute("role", "gridcell");
-      tdDomain.dataset.value = domain;
-      tdDomain.dataset.row = i;
-      tdDomain.dataset.col = "domain";
-      tdDomain.textContent = domain;
-      tr.appendChild(tdDomain);
-      
-      const tdNs = document.createElement("td");
-      tdNs.className = "ns-cell ns-highlight";
-      tdNs.setAttribute("tabindex", "0");
-      tdNs.setAttribute("role", "gridcell");
-      tdNs.dataset.value = ns;
-      tdNs.dataset.row = i;
-      tdNs.dataset.col = "ns";
-      tdNs.textContent = ns;
-      tr.appendChild(tdNs);
-      
-      fragment.appendChild(tr);
+      const td1 = document.createElement("td");
+      td1.className = "row-number"; td1.textContent = i + 1;
+      const td2 = document.createElement("td");
+      td2.className = "domain-cell"; td2.setAttribute("tabindex", "0");
+      td2.dataset.row = i; td2.dataset.col = "domain";
+      td2.textContent = processedDomains[i] || "";
+      const td3 = document.createElement("td");
+      td3.className = "ns-cell"; td3.setAttribute("tabindex", "0");
+      td3.dataset.row = i; td3.dataset.col = "ns";
+      td3.textContent = processedNS[i] || "";
+      tr.append(td1, td2, td3);
+      frag.appendChild(tr);
     }
-
     resultTable.innerHTML = "";
-    resultTable.appendChild(fragment);
+    resultTable.appendChild(frag);
 
     if (lastFocusedCell) {
-      const cell = resultTable.querySelector(
-        `td[data-row="${lastFocusedCell.row}"][data-col="${lastFocusedCell.col}"]`
-      );
-      if (cell) {
-        setTimeout(() => cell.focus(), 50);
-        return;
-      }
+      const cell = resultTable.querySelector(`td[data-row="${lastFocusedCell.row}"][data-col="${lastFocusedCell.col}"]`);
+      if (cell) { setTimeout(() => cell.focus(), 40); return; }
     }
-
-    const firstCell = resultTable.querySelector("td[tabindex]");
-    if (firstCell) setTimeout(() => firstCell.focus(), 50);
-  }
-
-  let keyboardHandler = null;
-
-  function attachKeyboardNav() {
-    if (keyboardHandler) {
-      document.removeEventListener("keydown", keyboardHandler);
-      keyboardHandler = null;
-    }
-
-    keyboardHandler = function(e) {
-      const target = e.target;
-      if (!target || target.tagName !== "TD" || !target.hasAttribute("tabindex")) return;
-      
-      const navigationKeys = ["ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight", "Enter"];
-      if (!navigationKeys.includes(e.key)) return;
-      
-      e.preventDefault();
-      
-      const row = target.parentElement;
-      const tbody = row.parentElement;
-      const rows = Array.from(tbody.children);
-      const currentRowIndex = rows.indexOf(row);
-      
-      const cells = Array.from(row.querySelectorAll("td[tabindex]"));
-      const currentCellIndex = cells.indexOf(target);
-      
-      let newRowIndex = currentRowIndex;
-      let newCellIndex = currentCellIndex;
-      
-      switch (e.key) {
-        case "Enter":
-          if (e.shiftKey) {
-            newRowIndex = Math.max(currentRowIndex - 1, 0);
-          } else {
-            newRowIndex = Math.min(currentRowIndex + 1, rows.length - 1);
-          }
-          break;
-        case "ArrowDown":
-          newRowIndex = Math.min(currentRowIndex + 1, rows.length - 1);
-          break;
-        case "ArrowUp":
-          newRowIndex = Math.max(currentRowIndex - 1, 0);
-          break;
-        case "ArrowRight":
-          newCellIndex = Math.min(currentCellIndex + 1, cells.length - 1);
-          break;
-        case "ArrowLeft":
-          newCellIndex = Math.max(currentCellIndex - 1, 0);
-          break;
-      }
-      
-      if (newRowIndex !== currentRowIndex || newCellIndex !== currentCellIndex) {
-        const newRow = rows[newRowIndex];
-        if (newRow) {
-          const newCells = newRow.querySelectorAll("td[tabindex]");
-          const targetCell = newCells[newCellIndex] || newCells[0];
-          if (targetCell) {
-            targetCell.focus();
-            saveFocusedCell(targetCell);
-          }
-        }
-      }
-    };
-    
-    document.addEventListener("keydown", keyboardHandler);
-  }
-
-  function escapeHtml(str) {
-    return String(str)
-      .replace(/&/g, "&amp;")
-      .replace(/</g, "&lt;")
-      .replace(/>/g, "&gt;")
-      .replace(/"/g, "&quot;")
-      .replace(/'/g, "&#039;");
+    const first = resultTable.querySelector("td[tabindex]");
+    if (first) setTimeout(() => first.focus(), 40);
   }
 
   function saveFocusedCell(cell) {
-    if (cell && cell.tagName === "TD") {
-      const row = cell.getAttribute("data-row");
-      const col = cell.getAttribute("data-col");
-      if (row !== null && col !== null) {
-        lastFocusedCell = { row: parseInt(row), col: col };
-      }
-    }
+    if (!cell || cell.tagName !== "TD") return;
+    const r = cell.getAttribute("data-row"), c = cell.getAttribute("data-col");
+    if (r !== null && c !== null) lastFocusedCell = { row: parseInt(r), col: c };
   }
 
-  function showFeedback(msg, bg = "#323232") {
-    feedback.textContent = msg;
-    feedback.style.background = bg;
-    feedback.classList.add("show");
-    clearTimeout(feedback._timeout);
-    feedback._timeout = setTimeout(() => {
-      feedback.classList.remove("show");
-    }, 3000);
-  }
-
-  function fallbackCopy(text) {
-    const textarea = document.createElement("textarea");
-    textarea.value = text;
-    textarea.style.position = "fixed";
-    textarea.style.left = "-9999px";
-    textarea.style.top = "-9999px";
-    document.body.appendChild(textarea);
-    textarea.select();
-    try {
-      document.execCommand("copy");
-      showFeedback("✅ Disalin (fallback)");
-    } catch (e) {
-      showFeedback("❌ Gagal menyalin", "#ef4444");
-    }
-    document.body.removeChild(textarea);
-  }
-
-  function copyAllData() {
-    if (processedDomains.length === 0) {
-      showFeedback("⚠️ Tidak ada data untuk disalin!", "#ef4444");
-      return;
-    }
-
-    const textToCopy = processedDomains.join("\n");
-
-    navigator.clipboard.writeText(textToCopy)
-      .then(() => {
-        showFeedback(`✅ ${processedDomains.length} domain disalin!`, "#1a73e8");
-      })
-      .catch(() => {
-        fallbackCopy(textToCopy);
-      });
-  }
-
-  function copyNSOnly() {
-    if (processedNS.length === 0) {
-      showFeedback("⚠️ Tidak ada data NS untuk disalin!", "#ef4444");
-      return;
-    }
-
-    const textToCopy = processedNS.join("\n");
-
-    navigator.clipboard.writeText(textToCopy)
-      .then(() => {
-        showFeedback(`✅ ${processedNS.length} baris NS disalin!`, "#8b5cf6");
-      })
-      .catch(() => {
-        fallbackCopy(textToCopy);
-      });
-  }
-
-  document.getElementById("copyAllBtn")?.addEventListener("click", copyAllData);
-  document.getElementById("copyNsBtn")?.addEventListener("click", copyNSOnly);
-
-  document.addEventListener("copy", function (e) {
+  document.addEventListener("copy", (e) => {
     const active = document.activeElement;
-    const isDnsCell = active && active.tagName === "TD" && active.hasAttribute("tabindex");
-    const isServerDomain = active && active.classList.contains("server-domain-cell");
-    const isRedirectDomain = active && active.classList.contains("redirect-domain-cell");
-    if (isDnsCell || isServerDomain || isRedirectDomain) {
-      e.preventDefault();
-      const text = isServerDomain || isRedirectDomain ? active.dataset.domain : active.textContent.trim();
-      if (text) {
-        e.clipboardData.setData("text/plain", text);
-        if (isRedirectDomain) {
-          if (redirectProgress) redirectProgress.textContent = `Berhasil menyalin domain: ${text}.`;
-        } else if (isServerDomain) {
-          showServerDomainCopied(active);
-        } else {
-          showFeedback(`✅ Disalin: "${text}"`, "#10b981");
-        }
-        if (isDnsCell) setTimeout(() => active.focus(), 50);
-      } else {
-        showFeedback("⚠️ Sel kosong", "#f59e0b");
+    const isDns = active?.tagName === "TD" && active.hasAttribute("tabindex");
+    const isServer = active?.classList?.contains("server-domain-cell");
+    const isRedirect = active?.classList?.contains("redirect-domain-cell");
+    if (!isDns && !isServer && !isRedirect) return;
+    e.preventDefault();
+    const text = (isServer || isRedirect) ? active.dataset.domain : active.textContent.trim();
+    if (!text) { showFeedback("⚠ Sel kosong"); return; }
+    e.clipboardData.setData("text/plain", text);
+    if (isRedirect && redirectProgress) redirectProgress.textContent = `Disalin: ${text}`;
+    else if (isServer) showServerDomainCopied(active);
+    else showFeedback(`✅ Disalin: "${text}"`);
+    log(`Copied: ${text}`, "info");
+    if (isDns) setTimeout(() => active.focus(), 40);
+  });
+
+  document.addEventListener("keydown", (e) => {
+    const active = document.activeElement;
+    if (!active || active.tagName !== "TD" || !active.hasAttribute("tabindex")) return;
+    const keys = ["ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight", "Enter"];
+    if (!keys.includes(e.key)) return;
+    e.preventDefault();
+    const row = active.parentElement, tbody = row.parentElement;
+    const rows = Array.from(tbody.children);
+    const rIdx = rows.indexOf(row);
+    const cells = Array.from(row.querySelectorAll("td[tabindex]"));
+    const cIdx = cells.indexOf(active);
+    let nR = rIdx, nC = cIdx;
+    if (e.key === "Enter") nR = e.shiftKey ? Math.max(rIdx - 1, 0) : Math.min(rIdx + 1, rows.length - 1);
+    else if (e.key === "ArrowDown") nR = Math.min(rIdx + 1, rows.length - 1);
+    else if (e.key === "ArrowUp") nR = Math.max(rIdx - 1, 0);
+    else if (e.key === "ArrowRight") nC = Math.min(cIdx + 1, cells.length - 1);
+    else if (e.key === "ArrowLeft") nC = Math.max(cIdx - 1, 0);
+    if (nR !== rIdx || nC !== cIdx) {
+      const newRow = rows[nR];
+      if (newRow) {
+        const nc = newRow.querySelectorAll("td[tabindex]");
+        const t = nc[nC] || nc[0];
+        if (t) { t.focus(); saveFocusedCell(t); }
       }
     }
   });
 
-  document.addEventListener("click", function (e) {
-    const target = e.target;
-    const redirectDomain = target instanceof Element ? target.closest(".redirect-domain-cell") : null;
-    if (redirectDomain) {
-      redirectDomain.focus();
-      const activeRow = redirectDomain.closest("tr");
-      const linkIndex = Number(activeRow?.dataset.redirectIndex);
-      const link = redirectLinks[linkIndex];
-      if (link) showRedirectPreview(link, activeRow);
-      return;
-    }
-
-    const serverDomain = target instanceof Element ? target.closest(".server-domain-cell") : null;
-    if (serverDomain) {
-      serverDomain.focus();
-      return;
-    }
-    if (target.tagName === "TD" && target.closest(".sheet-table") && target.hasAttribute("tabindex")) {
-      target.focus();
-      saveFocusedCell(target);
-    }
+  document.addEventListener("click", (e) => {
+    const t = e.target;
+    const rd = t.closest?.(".redirect-domain-cell");
+    if (rd) { rd.focus(); previewFocusedRedirectDomain(rd); return; }
+    const sd = t.closest?.(".server-domain-cell");
+    if (sd) { sd.focus(); return; }
+    if (t.tagName === "TD" && t.closest(".data-table") && t.hasAttribute("tabindex")) { t.focus(); saveFocusedCell(t); }
   });
 
-  const serverDomainCopyTimeouts = new WeakMap();
-
-  function showServerDomainCopied(domainItem) {
-    domainItem.classList.add("is-copied");
-    const copiedIndicator = domainItem.querySelector(".server-domain-copied");
-    if (copiedIndicator) copiedIndicator.textContent = "✓ COPIED";
-
-    clearTimeout(serverDomainCopyTimeouts.get(domainItem));
-    const timeout = setTimeout(() => {
-      domainItem.classList.remove("is-copied");
-      if (copiedIndicator) copiedIndicator.textContent = "";
-      serverDomainCopyTimeouts.delete(domainItem);
-    }, 1000);
-    serverDomainCopyTimeouts.set(domainItem, timeout);
+  const serverTimeouts = new WeakMap();
+  function showServerDomainCopied(el) {
+    el.classList.add("is-copied");
+    const ind = el.querySelector(".server-domain-copied");
+    if (ind) ind.textContent = "✓ COPIED";
+    clearTimeout(serverTimeouts.get(el));
+    const to = setTimeout(() => { el.classList.remove("is-copied"); if (ind) ind.textContent = ""; serverTimeouts.delete(el); }, 1000);
+    serverTimeouts.set(el, to);
   }
 
-  async function copyServerDomain(domainItem) {
-    const domain = domainItem.dataset.domain;
-    if (!domain) return;
-
-    try {
-      await navigator.clipboard.writeText(domain);
-      showServerDomainCopied(domainItem);
-    } catch (error) {
-      console.error("Gagal menyalin domain:", error);
-      fallbackCopy(domain);
-      showServerDomainCopied(domainItem);
-    }
+  async function copyServerDomain(el) {
+    const d = el.dataset.domain; if (!d) return;
+    try { await navigator.clipboard.writeText(d); showServerDomainCopied(el); log(`Copied: ${d}`, "info"); }
+    catch { fallbackCopy(d); showServerDomainCopied(el); }
   }
 
-  document.addEventListener("keydown", function (event) {
+  document.addEventListener("keydown", (e) => {
     const active = document.activeElement;
-    if (active instanceof HTMLElement && active.classList.contains("redirect-domain-cell")) {
-      const domains = Array.from(document.querySelectorAll("#redirectTableBody .redirect-domain-cell"));
-      const currentIndex = domains.indexOf(active);
-      if (event.key === "ArrowDown" || event.key === "ArrowUp" || event.key === "Tab") {
-        const direction = event.key === "ArrowUp" || (event.key === "Tab" && event.shiftKey) ? -1 : 1;
-        const nextDomain = domains[currentIndex + direction];
-        if (nextDomain) {
-          event.preventDefault();
-          nextDomain.focus();
-        }
+    if (active?.classList?.contains("redirect-domain-cell")) {
+      const list = Array.from(document.querySelectorAll("#redirectTableBody .redirect-domain-cell"));
+      const i = list.indexOf(active);
+      if (e.key === "ArrowDown" || e.key === "ArrowUp" || e.key === "Tab") {
+        const dir = e.key === "ArrowUp" || (e.key === "Tab" && e.shiftKey) ? -1 : 1;
+        const next = list[i + dir]; if (next) { e.preventDefault(); next.focus(); }
         return;
       }
-      if (event.key === "Enter") {
-        event.preventDefault();
-        const activeRow = active.closest("tr");
-        const link = redirectLinks[Number(activeRow?.dataset.redirectIndex)];
-        if (link) showRedirectPreview(link, activeRow);
-      } else if (event.key.toLowerCase() === "c" && event.ctrlKey) {
-        event.preventDefault();
-        copyRedirectDomain(active);
-      }
+      if (e.key === "Enter") { e.preventDefault(); previewFocusedRedirectDomain(active); }
+      else if (e.key.toLowerCase() === "c" && e.ctrlKey) { e.preventDefault(); copyRedirectDomain(active); }
       return;
     }
-
-    if (!(active instanceof HTMLElement) || !active.classList.contains("server-domain-cell")) return;
-
-    const list = active.parentElement;
-    const domains = Array.from(list.querySelectorAll(".server-domain-cell"));
-    const currentIndex = domains.indexOf(active);
-
-    if (event.key === "ArrowDown" || (event.key === "Tab" && !event.shiftKey)) {
-      const nextDomain = domains[currentIndex + 1];
-      if (nextDomain) {
-        event.preventDefault();
-        nextDomain.focus();
+    if (active?.classList?.contains("server-domain-cell")) {
+      const list = active.parentElement;
+      const items = Array.from(list.querySelectorAll(".server-domain-cell"));
+      const i = items.indexOf(active);
+      if (e.key === "ArrowDown" || (e.key === "Tab" && !e.shiftKey)) {
+        const n = items[i + 1]; if (n) { e.preventDefault(); n.focus(); } return;
       }
-      return;
-    }
-
-    if (event.key === "ArrowUp" || (event.key === "Tab" && event.shiftKey)) {
-      const previousDomain = domains[currentIndex - 1];
-      if (previousDomain) {
-        event.preventDefault();
-        previousDomain.focus();
+      if (e.key === "ArrowUp" || (e.key === "Tab" && e.shiftKey)) {
+        const p = items[i - 1]; if (p) { e.preventDefault(); p.focus(); } return;
       }
-      return;
-    }
-
-    if (event.key === "Enter" || (event.key.toLowerCase() === "c" && event.ctrlKey)) {
-      event.preventDefault();
-      copyServerDomain(active);
+      if (e.key === "Enter" || (e.key.toLowerCase() === "c" && e.ctrlKey)) {
+        e.preventDefault(); copyServerDomain(active);
+      }
     }
   });
 
-  async function copyRedirectDomain(domainElement) {
-    const domain = domainElement.dataset.domain;
-    if (!domain || !redirectProgress) return;
-
+  async function copyRedirectDomain(el) {
+    const d = el.dataset.domain; if (!d) return;
     try {
-      if (!navigator.clipboard?.writeText) {
-        throw new Error("Clipboard API tidak tersedia.");
-      }
-      await navigator.clipboard.writeText(domain);
-      redirectProgress.textContent = `Berhasil menyalin domain: ${domain}.`;
-    } catch (error) {
-      console.error("Gagal menyalin domain URL asal:", error);
-      const temporaryInput = document.createElement("textarea");
-      temporaryInput.value = domain;
-      temporaryInput.setAttribute("readonly", "");
-      temporaryInput.style.position = "fixed";
-      temporaryInput.style.left = "-9999px";
-      document.body.appendChild(temporaryInput);
-      let copied = false;
-      try {
-        temporaryInput.select();
-        copied = document.execCommand("copy");
-      } catch (fallbackError) {
-        console.error("Clipboard fallback gagal menyalin domain URL asal:", fallbackError);
-      } finally {
-        temporaryInput.remove();
-        domainElement.focus();
-      }
-      redirectProgress.textContent = copied
-        ? `Berhasil menyalin domain: ${domain}.`
-        : "Gagal menyalin domain. Silakan coba lagi.";
-    }
+      await navigator.clipboard.writeText(d);
+      if (redirectProgress) redirectProgress.textContent = `Disalin: ${d}`;
+      log(`Copied: ${d}`, "info");
+    } catch { fallbackCopy(d); }
   }
 
-  document.addEventListener("focusin", function (e) {
-    const target = e.target;
-    if (target.tagName === "TD" && target.hasAttribute("tabindex")) {
-      saveFocusedCell(target);
-    }
-    if (target instanceof Element && target.classList.contains("server-domain-cell")) {
-      document.querySelectorAll(".server-domain-cell.is-focused").forEach(item => {
-        item.classList.remove("is-focused");
-      });
-      target.classList.add("is-focused");
+  document.addEventListener("focusin", (e) => {
+    const t = e.target;
+    if (t.tagName === "TD" && t.hasAttribute("tabindex")) saveFocusedCell(t);
+    if (t.classList?.contains("server-domain-cell")) {
+      document.querySelectorAll(".server-domain-cell.is-focused").forEach((el) => el.classList.remove("is-focused"));
+      t.classList.add("is-focused");
     }
   });
 
-  if (inputData) {
-    inputData.addEventListener("input", processData);
-    processData();
-  }
+  document.getElementById("copyAllBtn")?.addEventListener("click", () => {
+    if (processedDomains.length === 0) { showFeedback("⚠ Tidak ada domain"); return; }
+    navigator.clipboard.writeText(processedDomains.join("\n")).then(() => {
+      showFeedback(`✅ ${processedDomains.length} domain disalin`);
+      log(`Copy all domains: ${processedDomains.length}`, "success");
+    }).catch(() => fallbackCopy(processedDomains.join("\n")));
+  });
 
-  attachKeyboardNav();
+  document.getElementById("copyNsBtn")?.addEventListener("click", () => {
+    if (processedNS.length === 0) { showFeedback("⚠ Tidak ada NS"); return; }
+    navigator.clipboard.writeText(processedNS.join("\n")).then(() => {
+      showFeedback(`✅ ${processedNS.length} NS disalin`);
+      log(`Copy all NS: ${processedNS.length}`, "success");
+    }).catch(() => fallbackCopy(processedNS.join("\n")));
+  });
 
-  // ==========================================
-  // 7. SERVER & BRAND MAPPING LOGIC (Dimasukkan ke dalam scope utama)
-  // ==========================================
+  if (inputData) { inputData.addEventListener("input", processData); processData(); }
+
+  // ═══════════════ SERVER MAPPING ═══════════════
   const serverDatabase = [
-      {
-          name: "SERVER 1",
-          ips: ["132.48.200.96", "76.223.90.90"],
-          brands: ["WDBOS", "JPSLOT", "BOSJOKO", "ZEUSSLOT", "MANCINGDUIT", "JUTAWANBET", "LATOTO", "TOPANBOS88", "HOKBENTOTO"]
-      },
-      {
-          name: "SERVER 2",
-          ips: ["132.48.203.169", "76.223.88.75"],
-          brands: ["DEPOBOS", "ANGKABET", "TVTOTO", "PULITOTO", "WATITOTO", "FATCAI99", "RUANGWD", "TOPWD", "PESONA805"]
-      },
-      {
-          name: "SERVER 3",
-          ips: ["75.2.67.164", "3.33.129.68"],
-          brands: ["BANDAR80", "HOKIJITU", "INDOJP", "JUARA88", "LIGABANDOT", "LAPAK99", "LAPAKMAHJONG", "ARENA303", "WDMAHJONG", "SEJATIWIN", "MARKASWD", "CITAWIN"]
-      },
-      {
-          name: "EXTRA BRANDS",
-          ips: [],
-          brands: ["GENGTOTO", "FIATOGEL", "DINGDONGTOGEL", "TOGELUP"]
-      }
+    { name: "SERVER 1", ips: ["132.48.200.96", "76.223.90.90"], brands: ["WDBOS", "JPSLOT", "BOSJOKO", "ZEUSSLOT", "MANCINGDUIT", "JUTAWANBET", "JUTAWAN", "LATOTO", "LA", "TOPANBOS88", "HOKBENTOTO", "HOKBEN"] },
+    { name: "SERVER 2", ips: ["132.48.203.169", "76.223.88.75"], brands: ["DEPOBOS", "ANGKABET", "TVTOTO", "PULITOTO", "PULI", "WATITOTO", "WATI", "FATCAI99", "FATCAI", "RUANGWD", "TOPWD", "PESONA805"] },
+    { name: "SERVER 3", ips: ["75.2.67.164", "3.33.129.68"], brands: ["BANDAR80", "BANDAR", "HOKIJITU", "INDOJP", "JUARA88", "JUARA", "LIGABANDOT", "LAPAK99", "LAPAK", "LAPAKMAHJONG", "ARENA303", "ARENA", "WDMAHJONG", "WDMAH", "SEJATIWIN", "MARKASWD", "CITAWIN"] },
   ];
 
-window.copyServerMapping = function(serverNumber) {
-      const domainsContainer = document.getElementById(`server${serverNumber}Domains`);
-      const domains = domainsContainer
-          ? Array.from(domainsContainer.querySelectorAll(".server-domain-cell"))
-              .map(domain => domain.dataset.domain)
-              .filter(Boolean)
-          : [];
-
-      if (domains.length === 0) {
-          showFeedback(`⚠️ Tidak ada data SERVER ${serverNumber} untuk disalin!`, "#ef4444");
-          return;
-      }
-
-      const textToCopy = domains.join('\n');
-      const clipboardWrite = navigator.clipboard
-          ? navigator.clipboard.writeText(textToCopy)
-          : Promise.reject(new Error("Clipboard API tidak tersedia"));
-
-      clipboardWrite
-          .then(() => showFeedback(`✅ ${domains.length} baris SERVER ${serverNumber} disalin!`, "#1a73e8"))
-          .catch(() => fallbackCopy(textToCopy));
-  };
-
-function renderServerDomainList(containerId, domains, emptyMessage) {
-      const container = document.getElementById(containerId);
-      if (!container) return;
-
-      container.replaceChildren();
-      if (domains.length === 0) {
-          const emptyState = document.createElement("div");
-          emptyState.className = "server-empty-state";
-          emptyState.textContent = emptyMessage;
-          container.appendChild(emptyState);
-          return;
-      }
-
-      domains.forEach(domain => {
-          const domainItem = document.createElement("div");
-          domainItem.className = "server-domain-cell";
-          domainItem.setAttribute("role", "listitem");
-          domainItem.setAttribute("tabindex", "0");
-          domainItem.dataset.domain = domain;
-
-          const domainText = document.createElement("span");
-          domainText.className = "server-domain-text";
-          domainText.textContent = domain;
-
-          const copiedIndicator = document.createElement("span");
-          copiedIndicator.className = "server-domain-copied";
-          copiedIndicator.setAttribute("aria-live", "polite");
-
-          domainItem.append(domainText, copiedIndicator);
-          container.appendChild(domainItem);
-      });
+  function renderServerDomainList(id, domains, emptyMsg) {
+    const c = document.getElementById(id); if (!c) return;
+    c.replaceChildren();
+    if (domains.length === 0) {
+      const e = document.createElement("div");
+      e.className = "server-empty-state";
+      e.textContent = emptyMsg;
+      c.appendChild(e);
+      return;
+    }
+    domains.forEach((d) => {
+      const item = document.createElement("div");
+      item.className = "server-domain-cell";
+      item.setAttribute("role", "listitem");
+      item.setAttribute("tabindex", "0");
+      item.dataset.domain = d;
+      const txt = document.createElement("span");
+      txt.className = "server-domain-text";
+      txt.textContent = d;
+      const ind = document.createElement("span");
+      ind.className = "server-domain-copied";
+      ind.setAttribute("aria-live", "polite");
+      item.append(txt, ind);
+      c.appendChild(item);
+    });
   }
 
-window.processServerMapping = function() {
-      const rawInput = document.getElementById('inputRawData').value;
-      const lines = rawInput.split('\n').map(l => l.trim()).filter(l => l.length > 0);
+  function processServerMapping() {
+    const raw = document.getElementById("inputRawData")?.value || "";
+    const lines = raw.split("\n").map((l) => l.trim()).filter(Boolean);
+    const s1 = [], s2 = [], s3 = [], idn = [];
 
-      // Database brand yang sudah dipisah per baris agar lebih mudah dan akurat
-      const serverDatabase = [
-          {
-              name: "SERVER 1",
-              brands: ["WDBOS", "JPSLOT", "BOSJOKO", "ZEUSSLOT", "MANCINGDUIT", "JUTAWANBET", "JUTAWAN", "LATOTO", "LA", "TOPANBOS88", "HOKBENTOTO", "HOKBEN"]
-          },
-          {
-              name: "SERVER 2",
-              brands: ["DEPOBOS", "ANGKABET", "TVTOTO", "PULITOTO", "PULI", "WATITOTO", "WATI", "FATCAI99", "FATCAI", "RUANGWD", "TOPWD", "PESONA805"]
-          },
-          {
-              name: "SERVER 3",
-              brands: ["BANDAR80", "BANDAR", "HOKIJITU", "INDOJP", "JUARA88", "JUARA", "LIGABANDOT", "LAPAK99", "LAPAK", "LAPAKMAHJONG", "ARENA303", "ARENA", "WDMAHJONG", "WDMAH", "SEJATIWIN", "MARKASWD", "CITAWIN"]
-          }
-      ];
+    lines.forEach((line) => {
+      if (!line.includes(".")) return;
+      const ll = line.toLowerCase();
+      let target = null;
+      for (const srv of serverDatabase) {
+        for (const b of srv.brands) {
+          const k = b.toLowerCase();
+          const norm = ll.replace(/aa/g, "a").replace(/oo/g, "o").replace(/ee/g, "e");
+          if (norm.includes(k) || ll.includes(k) || norm.startsWith(k)) { target = srv.name; break; }
+        }
+        if (target) break;
+      }
+      if (target === "SERVER 1") { if (!s1.includes(line)) s1.push(line); }
+      else if (target === "SERVER 2") { if (!s2.includes(line)) s2.push(line); }
+      else if (target === "SERVER 3") { if (!s3.includes(line)) s3.push(line); }
+      else idn.push(line);
+    });
 
-      let server1Domains = [];
-      let server2Domains = [];
-      let server3Domains = [];
-      let idnFallbackResults = [];
+    [[s1, 1], [s2, 2], [s3, 3]].forEach(([domains, n]) => {
+      renderServerDomainList(`server${n}Domains`, domains, "Belum ada domain untuk server ini.");
+      const c = document.getElementById(`server${n}Count`);
+      if (c) c.textContent = `${String(domains.length).padStart(2, "0")} ${domains.length === 1 ? "DOMAIN" : "DOMAINS"}`;
+    });
+    renderServerDomainList("outputIdnFallback", idn, "Belum ada domain IDN.");
+    const ic = document.getElementById("idnDomainCount");
+    if (ic) ic.textContent = `${String(idn.length).padStart(2, "0")} DOMAINS`;
 
-      lines.forEach(line => {
-          let lowerLine = line.toLowerCase();
-          let isDomain = line.includes('.');
+    log(`Server mapping: S1=${s1.length}, S2=${s2.length}, S3=${s3.length}, IDN=${idn.length}`, "success");
+    showFeedback(`✅ Mapping selesai: ${s1.length + s2.length + s3.length} domain terpetakan`);
+  }
 
-          if (isDomain) {
-              let targetServer = null;
+  function copyServerMapping(n) {
+    const c = document.getElementById(`server${n}Domains`);
+    const domains = c ? Array.from(c.querySelectorAll(".server-domain-cell")).map((d) => d.dataset.domain).filter(Boolean) : [];
+    if (domains.length === 0) { showFeedback(`⚠ Tidak ada data SERVER ${n}`); log(`Server ${n}: no data to copy.`, "warn"); return; }
+    const text = domains.join("\n");
+    (navigator.clipboard ? navigator.clipboard.writeText(text) : Promise.reject())
+      .then(() => { showFeedback(`✅ ${domains.length} baris SERVER ${n} disalin`); log(`Server ${n} copied: ${domains.length}`, "success"); })
+      .catch(() => fallbackCopy(text));
+  }
 
-              for (let srv of serverDatabase) {
-                  for (let b of srv.brands) {
-                      let keyword = b.toLowerCase();
-                      let normalizedDomain = lowerLine.replace(/aa/g, "a").replace(/oo/g, "o").replace(/ee/g, "e");
+  // Wire up buttons via event listeners (no global scope)
+  document.getElementById("runServerMappingBtn")?.addEventListener("click", processServerMapping);
+  document.querySelectorAll("[data-copy-server]").forEach((btn) => {
+    btn.addEventListener("click", () => copyServerMapping(Number(btn.dataset.copyServer)));
+  });
 
-                      if (normalizedDomain.includes(keyword) || lowerLine.includes(keyword) || normalizedDomain.startsWith(keyword)) {
-                          targetServer = srv.name;
-                          break;
-                      }
-                  }
-                  if (targetServer) break;
-              }
+  // Expose for command palette + shortcuts
+  window.processServerMapping = processServerMapping;
+  window.copyServerMapping = copyServerMapping;
 
-              if (targetServer === "SERVER 1") {
-                  if (!server1Domains.includes(line)) server1Domains.push(line);
-              } else if (targetServer === "SERVER 2") {
-                  if (!server2Domains.includes(line)) server2Domains.push(line);
-              } else if (targetServer === "SERVER 3") {
-                  if (!server3Domains.includes(line)) server3Domains.push(line);
-              } else {
-                  idnFallbackResults.push(line);
-              }
-          }
-      });
-
-      const serverDomains = [server1Domains, server2Domains, server3Domains];
-      serverDomains.forEach((domains, index) => {
-          const serverNumber = index + 1;
-          renderServerDomainList(
-              `server${serverNumber}Domains`,
-              domains,
-              "Belum ada domain untuk server ini."
-          );
-          document.getElementById(`server${serverNumber}Count`).textContent =
-              `${String(domains.length).padStart(2, "0")} ${domains.length === 1 ? "DOMAIN" : "DOMAINS"}`;
-      });
-      renderServerDomainList(
-          "outputIdnFallback",
-          idnFallbackResults,
-          "Belum ada domain IDN."
-      );
-      document.getElementById("idnDomainCount").textContent =
-          `${String(idnFallbackResults.length).padStart(2, "0")} DOMAINS`;
-  };
 })();

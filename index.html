@@ -4,379 +4,605 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <link rel="icon" type="image/png" href="https://i.postimg.cc/m2NfTFpT/Gemini-Generated-Image-rib7lyrib7lyrib7.jpg">
-    <title>Domain Ops Console v2.0</title>
+    <title>Domain Ops Console v3.0</title>
     <link rel="stylesheet" href="styles.css" />
   </head>
   <body>
-    <!-- HEADER -->
     <header class="header" role="banner">
-      <div class="header-brand">
-        <div class="header-brand-mark" aria-hidden="true">◈</div>
-        <div class="header-brand-copy">
-          <h1>DOMAIN OPS CONSOLE</h1>
-          <p class="brand-sub">Network intelligence &amp; domain operations</p>
+      <div class="header-left">
+        <div class="traffic-lights" aria-hidden="true">
+          <span class="tl tl-red"></span>
+          <span class="tl tl-yellow"></span>
+          <span class="tl tl-green"></span>
         </div>
-        <span class="brand-version">v2.0</span>
+        <div class="header-brand">
+          <div class="header-brand-mark" aria-hidden="true">◈</div>
+          <div class="header-brand-copy">
+            <h1>domain-ops<span class="cursor-blink">_</span></h1>
+            <p class="brand-sub">v3.0 · network intelligence console</p>
+          </div>
+        </div>
       </div>
-      <div class="status-pill" role="status" aria-live="polite">
-        <span class="status-dot" aria-hidden="true"></span>
-        <span>SYSTEM ONLINE</span>
-        <span id="systemClock" aria-label="Current time">--:--:--</span>
+      <div class="header-right">
+        <div class="header-stat">
+          <span class="stat-label">UPTIME</span>
+          <span class="stat-value" id="uptime">00:00:00</span>
+        </div>
+        <div class="header-stat">
+          <span class="stat-label">TIME</span>
+          <span class="stat-value" id="systemClock">--:--:--</span>
+        </div>
+        <div class="status-pill" role="status" aria-live="polite">
+          <span class="status-dot" aria-hidden="true"></span>
+          <span>ONLINE</span>
+        </div>
       </div>
     </header>
 
-    <!-- MAIN LAYOUT -->
     <div class="main-layout">
-      <!-- SIDEBAR NAVBAR -->
       <aside class="sidebar">
         <nav class="navbar" role="tablist" aria-label="Main navigation">
-          <div class="navbar-section">
-            <div class="navbar-eyebrow">Operations</div>
-            <button id="tab-home" class="navbar-button active" role="tab" aria-selected="true" aria-controls="tab-content-home" tabindex="0">Filter</button>
-            <button id="tab-profile" class="navbar-button" role="tab" aria-selected="false" aria-controls="tab-content-profile" tabindex="-1">Filter Domain</button>
-            <button id="tab-dns" class="navbar-button" role="tab" aria-selected="false" aria-controls="tab-content-dns" tabindex="-1">DNS</button>
-            <button id="tab-redirect" class="navbar-button" role="tab" aria-selected="false" aria-controls="tab-content-redirect" tabindex="-1">Cek Redirect</button>
-            <button id="tab-server" class="navbar-button" role="tab" aria-selected="false" aria-controls="tab-content-server" tabindex="-1">Server Mapping</button>
+          <div class="navbar-search" role="search">
+            <span class="navbar-search-icon" aria-hidden="true">⌕</span>
+            <input
+              type="text"
+              id="navSearch"
+              class="navbar-search-input"
+              placeholder="Cari modul..."
+              aria-label="Cari modul"
+              autocomplete="off"
+            />
           </div>
+
+          <div class="navbar-section">
+            <div class="navbar-eyebrow">
+              <span class="eyebrow-dot"></span>
+              MODULES
+            </div>
+            <button id="tab-home" class="navbar-button active" role="tab" aria-selected="true" aria-controls="tab-content-home" tabindex="0" data-keywords="filter compare check verifikasi pergantian">
+              <span class="nb-icon">⟐</span>
+              <span class="nb-label">Filter</span>
+              <span class="nb-shortcut">⌘1</span>
+            </button>
+            <button id="tab-profile" class="navbar-button" role="tab" aria-selected="false" aria-controls="tab-content-profile" tabindex="-1" data-keywords="group grup brand domain profile">
+              <span class="nb-icon">⊞</span>
+              <span class="nb-label">Filter Domain</span>
+              <span class="nb-shortcut">⌘2</span>
+            </button>
+            <button id="tab-dns" class="navbar-button" role="tab" aria-selected="false" aria-controls="tab-content-dns" tabindex="-1" data-keywords="dns nameserver ns parser">
+              <span class="nb-icon">◫</span>
+              <span class="nb-label">DNS Parser</span>
+              <span class="nb-shortcut">⌘3</span>
+            </button>
+            <button id="tab-redirect" class="navbar-button" role="tab" aria-selected="false" aria-controls="tab-content-redirect" tabindex="-1" data-keywords="redirect link url preview pratinjau">
+              <span class="nb-icon">⇗</span>
+              <span class="nb-label">Redirect</span>
+              <span class="nb-shortcut">⌘4</span>
+            </button>
+            <button id="tab-server" class="navbar-button" role="tab" aria-selected="false" aria-controls="tab-content-server" tabindex="-1" data-keywords="server mapping ip brand">
+              <span class="nb-icon">◫</span>
+              <span class="nb-label">Server Map</span>
+              <span class="nb-shortcut">⌘5</span>
+            </button>
+          </div>
+
           <div class="navbar-section navbar-section-system">
-            <div class="navbar-eyebrow">System</div>
-            <button id="tab-about" class="navbar-button" role="tab" aria-selected="false" aria-controls="tab-content-about" tabindex="-1">Tentang</button>
-            <button id="tab-help" class="navbar-button" role="tab" aria-selected="false" aria-controls="tab-content-help" tabindex="-1">Panduan</button>
+            <div class="navbar-eyebrow">
+              <span class="eyebrow-dot"></span>
+              SYSTEM
+            </div>
+            <button id="tab-about" class="navbar-button" role="tab" aria-selected="false" aria-controls="tab-content-about" tabindex="-1" data-keywords="about tentang info">
+              <span class="nb-icon">ⓘ</span>
+              <span class="nb-label">Tentang</span>
+            </button>
+            <button id="tab-help" class="navbar-button" role="tab" aria-selected="false" aria-controls="tab-content-help" tabindex="-1" data-keywords="help panduan bantuan">
+              <span class="nb-icon">?</span>
+              <span class="nb-label">Panduan</span>
+            </button>
           </div>
         </nav>
+
         <div class="navbar-footer">
-          <span class="status-dot" aria-hidden="true"></span>
-          <span>LOCAL WORKSPACE</span>
+          <div class="navbar-footer-line">
+            <span class="status-dot"></span>
+            <span>WORKSPACE</span>
+            <span class="navbar-footer-path">/local/db</span>
+          </div>
+          <div class="navbar-footer-hint">
+            <kbd>⌘K</kbd> palette · <kbd>⌘1-5</kbd> tabs
+          </div>
         </div>
       </aside>
 
-      <!-- CONTENT AREA -->
       <main class="content" role="main">
-        <!-- TAB 1: HOME / FILTER -->
-        <div 
-          id="tab-content-home" 
-          class="tabs-content active" 
-          role="tabpanel"
-          aria-labelledby="tab-home"
-        >
-          <section id="tab-checker">
-            <h2 class="page-title">🔍 Cek Pergantian Domain</h2>
-
-            <div class="checker-grid">
-              <div class="checker-box box-lama">
-                <label for="oldData">📦 1. Data Lama (Asal)</label>
-                <textarea
-                  id="oldData"
-                  placeholder="Tempel KHUSUS data domain lama di sini..."
-                  aria-describedby="oldDataHelp"
-                ></textarea>
-                <span id="oldDataHelp" class="sr-only">Tempelkan data domain lama dengan format [BRAND] diikuti daftar domain</span>
+        <!-- TAB 1: HOME / CHECKER -->
+        <div id="tab-content-home" class="tabs-content active" role="tabpanel" aria-labelledby="tab-home">
+          <div class="page-header">
+            <div class="page-header-left">
+              <div class="page-eyebrow">
+                <span class="page-eyebrow-dot"></span>
+                MODULE 01
               </div>
-              <div class="checker-box box-baru">
-                <label for="newData">📦 2. Data Baru (Pengganti)</label>
-                <textarea
-                  id="newData"
-                  placeholder="Tempel KHUSUS data domain baru di sini..."
-                  aria-describedby="newDataHelp"
-                ></textarea>
-                <span id="newDataHelp" class="sr-only">Tempelkan data domain baru dengan format [BRAND] diikuti daftar domain</span>
-              </div>
+              <h2 class="page-title">Domain Replacement Checker</h2>
+              <p class="page-desc">Bandingkan data lama dan baru untuk memverifikasi kesesuaian brand, jumlah, dan tipe domain.</p>
             </div>
-
-            <div class="button-group">
-              <button class="btn btn-primary" id="checkBtn" aria-label="Cek perbandingan domain">
-                🔍 CEK PERGANTIAN
+            <div class="page-header-actions">
+              <button class="btn btn-ghost" id="resetBtn" type="button">
+                <span class="btn-icon">↻</span>
+                Reset
               </button>
-              <button class="btn btn-secondary" id="resetBtn" aria-label="Reset semua data">
-                ↻ Reset
+              <button class="btn btn-primary" id="checkBtn" type="button">
+                <span class="btn-icon">▸</span>
+                Jalankan Cek
+                <kbd class="btn-kbd">⌘↵</kbd>
               </button>
             </div>
+          </div>
 
-            <div class="result-area" id="resultArea" role="region" aria-live="polite">
-              <div id="statusContainer">
+          <div class="kpi-grid" id="kpiGrid">
+            <div class="kpi-card kpi-primary">
+              <div class="kpi-header">
+                <span class="kpi-label">STATUS</span>
+                <span class="kpi-dot" id="kpiStatusDot"></span>
               </div>
-              <div id="reportContainer">
-                <div style="color: var(--text-faint); padding: 12px 0">
-                  Hasil perbandingan akan muncul di sini.
-                </div>
+              <div class="kpi-value" id="kpiStatus">IDLE</div>
+              <div class="kpi-sub" id="kpiStatusSub">Menunggu data</div>
+            </div>
+            <div class="kpi-card">
+              <div class="kpi-header">
+                <span class="kpi-label">TOTAL LAMA</span>
+                <span class="kpi-icon">▤</span>
+              </div>
+              <div class="kpi-value" id="kpiOld">0</div>
+              <div class="kpi-sub">domain di input lama</div>
+            </div>
+            <div class="kpi-card">
+              <div class="kpi-header">
+                <span class="kpi-label">TOTAL BARU</span>
+                <span class="kpi-icon">▤</span>
+              </div>
+              <div class="kpi-value" id="kpiNew">0</div>
+              <div class="kpi-sub">domain di input baru</div>
+            </div>
+            <div class="kpi-card">
+              <div class="kpi-header">
+                <span class="kpi-label">BRANDS</span>
+                <span class="kpi-icon">⊞</span>
+              </div>
+              <div class="kpi-value" id="kpiBrands">0</div>
+              <div class="kpi-sub">brand terdeteksi</div>
+            </div>
+          </div>
+
+          <div class="checker-grid">
+            <div class="checker-box box-lama">
+              <div class="box-titlebar">
+                <span class="box-dot box-dot-red"></span>
+                <span class="box-dot box-dot-yellow"></span>
+                <span class="box-dot box-dot-green"></span>
+                <span class="box-filename">old-data.txt</span>
+                <span class="box-meta">INPUT · OLD</span>
+              </div>
+              <textarea
+                id="oldData"
+                placeholder="[WDBOS]&#10;wdbos123.com&#10;wdbos456.com&#10;&#10;[BOSJOKO]&#10;bosjoko789.com"
+                aria-describedby="oldDataHelp"
+                spellcheck="false"
+              ></textarea>
+              <span id="oldDataHelp" class="sr-only">Tempelkan data domain lama dengan format [BRAND] diikuti daftar domain</span>
+            </div>
+            <div class="checker-box box-baru">
+              <div class="box-titlebar">
+                <span class="box-dot box-dot-red"></span>
+                <span class="box-dot box-dot-yellow"></span>
+                <span class="box-dot box-dot-green"></span>
+                <span class="box-filename">new-data.txt</span>
+                <span class="box-meta">INPUT · NEW</span>
+              </div>
+              <textarea
+                id="newData"
+                placeholder="[WDBOS]&#10;wdbos789.com&#10;wdbos101.com&#10;&#10;[BOSJOKO]&#10;bosjoko202.com"
+                aria-describedby="newDataHelp"
+                spellcheck="false"
+              ></textarea>
+              <span id="newDataHelp" class="sr-only">Tempelkan data domain baru dengan format [BRAND] diikuti daftar domain</span>
+            </div>
+          </div>
+
+          <div class="result-area" id="resultArea" role="region" aria-live="polite">
+            <div class="result-header">
+              <div class="result-header-left">
+                <span class="result-title">▸ OUTPUT</span>
+                <span class="result-subtitle" id="resultSubtitle">Belum ada hasil</span>
               </div>
             </div>
-          </section>
-
-          <!-- TABEL DATA -->
-          <div
-            id="table-container"
-            class="table-container"
-            style="margin-top: 24px"
-            role="region"
-            aria-label="Tabel data domain"
-          >
-            <table id="data-table" class="data-table">
-              <thead id="table-head" class="table-head">
-                <tr id="head-kepala" class="table-header-row"></tr>
-              </thead>
-              <tbody id="isi-table" class="table-body"></tbody>
-            </table>
+            <div id="statusContainer"></div>
+            <div id="reportContainer">
+              <div class="empty-state">
+                <div class="empty-state-icon">◌</div>
+                <div class="empty-state-title">Siap menerima data</div>
+                <div class="empty-state-desc">Masukkan data lama dan baru, lalu jalankan cek untuk melihat hasil perbandingan.</div>
+              </div>
+            </div>
           </div>
         </div>
 
-        <!-- TAB 2: FILTER DOMAIN -->
-        <div 
-          id="tab-content-profile" 
-          class="tabs-content" 
-          role="tabpanel"
-          aria-labelledby="tab-profile"
-        >
-          <h1 class="page-title">🗂 Pengelompokan Domain</h1>
+        <!-- TAB 2: PROFILE -->
+        <div id="tab-content-profile" class="tabs-content" role="tabpanel" aria-labelledby="tab-profile">
+          <div class="page-header">
+            <div class="page-header-left">
+              <div class="page-eyebrow">
+                <span class="page-eyebrow-dot"></span>
+                MODULE 02
+              </div>
+              <h2 class="page-title">Brand Grouping</h2>
+              <p class="page-desc">Tempel daftar domain dan secara otomatis dikelompokkan berdasarkan brand terdeteksi.</p>
+            </div>
+            <div class="page-header-actions">
+              <button id="btn-copy-output" class="btn btn-secondary" type="button">
+                <span class="btn-icon">⎘</span>
+                Copy Semua
+              </button>
+            </div>
+          </div>
+
           <div class="profile-container">
-            <div class="box">
-              <label for="domainInput" class="box-label-title">Paste Domain di Sini:</label>
-              <textarea
-                id="domainInput"
-                placeholder="Paste daftar domain..."
-                aria-describedby="domainInputHelp"
-              ></textarea>
-              <span id="domainInputHelp" class="sr-only">Tempelkan daftar domain, satu per baris</span>
+            <div class="panel panel-input">
+              <div class="panel-header">
+                <div class="panel-header-title">
+                  <span class="panel-icon">▸</span>
+                  Domain Input
+                </div>
+                <span class="panel-badge">1 domain / baris</span>
+              </div>
+              <div class="panel-body">
+                <textarea
+                  id="domainInput"
+                  placeholder="wdbos123.com&#10;zeusslot456.com&#10;bosjoko789.com"
+                  aria-describedby="domainInputHelp"
+                  spellcheck="false"
+                ></textarea>
+                <span id="domainInputHelp" class="sr-only">Tempelkan daftar domain, satu per baris</span>
+              </div>
             </div>
 
-            <div class="box">
-              <div class="box-header">
-                <h3>Hasil Pengelompokan:</h3>
-                <button
-                  id="btn-copy-output"
-                  class="btn btn-secondary btn-sm"
-                  type="button"
-                  aria-label="Copy hasil pengelompokan"
-                >
-                  Copy
-                </button>
+            <div class="panel panel-output">
+              <div class="panel-header">
+                <div class="panel-header-title">
+                  <span class="panel-icon">◂</span>
+                  Grouped Output
+                </div>
+                <span class="panel-badge" id="groupCount">0 BRANDS</span>
               </div>
-              <div id="output" class="result-box" role="list" aria-label="Hasil pengelompokan domain"></div>
+              <div class="panel-body">
+                <div id="output" class="result-box" role="list" aria-label="Hasil pengelompokan domain">
+                  <div class="empty-state">
+                    <div class="empty-state-icon">◌</div>
+                    <div class="empty-state-title">Belum ada data</div>
+                    <div class="empty-state-desc">Domain akan muncul otomatis di sini.</div>
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
         </div>
 
         <!-- TAB 3: DNS -->
-        <div 
-          id="tab-content-dns" 
-          class="tabs-content" 
-          role="tabpanel"
-          aria-labelledby="tab-dns"
-        >
-          <div class="container">
-            <div class="title-bar">
-              <h1>📊 Pemisah Domain &amp; Nameserver</h1>
-            </div>
-
-            <div class="grid-layout">
-              <div class="column-box">
-                <div class="column-header header-yellow">
-                  📝 Input Data Mentah
-                </div>
-                <div class="column-body">
-                  <textarea
-                    id="inputData"
-                    class="input-yellow"
-                    placeholder="Tempelkan data di sini..."
-                    aria-describedby="inputDataHelp"
-                  ></textarea>
-                  <span id="inputDataHelp" class="sr-only">Tempelkan data mentah domain dan nameserver</span>
-                </div>
+        <div id="tab-content-dns" class="tabs-content" role="tabpanel" aria-labelledby="tab-dns">
+          <div class="page-header">
+            <div class="page-header-left">
+              <div class="page-eyebrow">
+                <span class="page-eyebrow-dot"></span>
+                MODULE 03
               </div>
-
-              <!-- Tabel Mode Lama: Berisi domain sisa yang tidak masuk massal -->
-              <div class="column-box">
-                <div class="column-header header-green">
-                  📊 Hasil Domain Lainnya (Tunggal)
-                  <span class="status-badge" id="rowCount" aria-label="Jumlah baris">0</span>
-                </div>
-                <div class="column-body">
-                  <div class="output-table-container" id="resultContainer" role="table" aria-label="Tabel hasil domain dan nameserver">
-                    <table class="sheet-table" id="resultSheet">
-                      <thead>
-                        <tr>
-                          <th scope="col">#</th>
-                          <th scope="col">🌐 Domain</th>
-                          <th scope="col">🖥️ Nameserver</th>
-                        </tr>
-                      </thead>
-                      <tbody id="resultTable">
-                        <tr>
-                          <td class="empty-msg" colspan="3">
-                            Data akan muncul di sini...
-                          </td>
-                        </tr>
-                      </tbody>
-                    </table>
-                  </div>
-                  <div class="btn-group">
-                    <button class="btn btn-copy-all" id="copyAllBtn" aria-label="Copy semua domain">
-                      📋 Copy Semua Domain
-                    </button>
-                    <button class="btn btn-success" id="copyNsBtn" aria-label="Copy semua NS atau nameserver">
-                      📋 Copy Semua NS / Nameserver
-                    </button>
-                  </div>
-                </div>
-              </div>
+              <h2 class="page-title">DNS Parser</h2>
+              <p class="page-desc">Pisahkan domain dan nameserver dari data mentah. Domain dengan NS sama akan dikelompokkan otomatis.</p>
             </div>
-
-            <!-- Kotak Hasil Massal Dinamis -->
-            <div style="padding: 20px; border-top: 1px solid var(--border-primary); margin-top: 20px;">
-              <h3 style="margin-bottom: 15px; font-size: 15px; color: var(--text-primary);">⚡ Kelompok DNS Sama (Massal)</h3>
-              <div id="bulkResultContainer">
-                <span style="color: #9CA3AF; font-style: italic;">Belum ada data massal...</span>
-              </div>
-            </div>
-
           </div>
 
-          <div id="copyFeedback" class="copy-feedback" role="alert" aria-live="assertive">
-            ✅ Disalin ke clipboard!
+          <div class="dns-layout">
+            <div class="panel panel-input">
+              <div class="panel-header">
+                <div class="panel-header-title">
+                  <span class="panel-icon">▸</span>
+                  Raw Input
+                </div>
+                <span class="panel-badge" id="inputLineCount">0 lines</span>
+              </div>
+              <div class="panel-body">
+                <textarea
+                  id="inputData"
+                  placeholder="wdbos123.com&#10;ns1.cloudflare.com&#10;ns2.cloudflare.com&#10;&#10;zeusslot456.com&#10;ns1.digitalocean.com"
+                  aria-describedby="inputDataHelp"
+                  spellcheck="false"
+                ></textarea>
+                <span id="inputDataHelp" class="sr-only">Tempelkan data mentah domain dan nameserver</span>
+              </div>
+            </div>
+
+            <div class="panel panel-output">
+              <div class="panel-header">
+                <div class="panel-header-title">
+                  <span class="panel-icon">◂</span>
+                  Parsed Result
+                </div>
+                <div class="panel-header-actions">
+                  <button class="btn btn-sm btn-ghost" id="copyAllBtn" type="button" title="Copy semua domain">
+                    ⎘ Domain
+                  </button>
+                  <button class="btn btn-sm btn-ghost" id="copyNsBtn" type="button" title="Copy semua NS">
+                    ⎘ NS
+                  </button>
+                  <span class="panel-badge" id="rowCount" aria-label="Jumlah baris">0</span>
+                </div>
+              </div>
+              <div class="panel-body panel-body-table">
+                <div class="table-wrap" role="table" aria-label="Tabel hasil domain dan nameserver">
+                  <table class="data-table" id="resultSheet">
+                    <thead>
+                      <tr>
+                        <th scope="col" class="col-num">#</th>
+                        <th scope="col">DOMAIN</th>
+                        <th scope="col">NAMESERVER</th>
+                      </tr>
+                    </thead>
+                    <tbody id="resultTable">
+                      <tr>
+                        <td class="empty-msg" colspan="3">
+                          <div class="empty-state">
+                            <div class="empty-state-icon">◌</div>
+                            <div class="empty-state-title">Belum ada data</div>
+                            <div class="empty-state-desc">Tempel data di kolom sebelah kiri.</div>
+                          </div>
+                        </td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="panel bulk-panel">
+            <div class="panel-header">
+              <div class="panel-header-title">
+                <span class="panel-icon">⚡</span>
+                Bulk Grouped DNS
+              </div>
+              <span class="panel-badge" id="bulkCount">0 GROUPS</span>
+            </div>
+            <div class="panel-body">
+              <div id="bulkResultContainer">
+                <div class="empty-state empty-state-inline">
+                  <div class="empty-state-icon">◌</div>
+                  <div class="empty-state-title">Belum ada grup massal</div>
+                  <div class="empty-state-desc">Domain dengan NS yang sama (≥2) akan muncul di sini.</div>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
 
-        <!-- TAB 4: SERVER MAPPING (TAB BARU) -->
-        <div 
-          id="tab-content-server" 
-          class="tabs-content" 
-          role="tabpanel"
-          aria-labelledby="tab-server"
-        >
-          <h1 class="page-title">🌐 Pusat Mapping Server & Brand</h1>
-          <div class="container" style="padding: 0;">
-            <p class="server-mapping-description">Masukkan daftar brand atau domain mentah untuk memetakannya ke server atau mengidentifikasi domain IDN.</p>
-            
-            <div class="form-group server-input-panel">
-              <div class="server-input-heading">
-                <label for="inputRawData">Input Domain / Brand</label>
-                <span class="server-input-hint">Satu domain atau brand per baris</span>
+        <!-- TAB 4: SERVER -->
+        <div id="tab-content-server" class="tabs-content" role="tabpanel" aria-labelledby="tab-server">
+          <div class="page-header">
+            <div class="page-header-left">
+              <div class="page-eyebrow">
+                <span class="page-eyebrow-dot"></span>
+                MODULE 05
               </div>
-              <textarea id="inputRawData" class="server-input" rows="6" placeholder="> GENGTOTO&#10;> geng39157.com&#10;> wdmahjong38422.com"></textarea>
-              <div class="server-input-actions">
-                <span class="server-input-note">Data diproses secara lokal di browser</span>
-                <button onclick="processServerMapping()" class="btn btn-primary" type="button">Jalankan Mapping <span aria-hidden="true">→</span></button>
+              <h2 class="page-title">Server & Brand Mapping</h2>
+              <p class="page-desc">Petakan domain ke server berdasarkan brand. Domain yang tidak cocok akan masuk ke fallback IDN.</p>
+            </div>
+            <div class="page-header-actions">
+              <button id="runServerMappingBtn" class="btn btn-primary" type="button">
+                <span class="btn-icon">▸</span>
+                Jalankan Mapping
+                <kbd class="btn-kbd">⌘↵</kbd>
+              </button>
+            </div>
+          </div>
+
+          <div class="panel panel-input server-input-panel">
+            <div class="panel-header">
+              <div class="panel-header-title">
+                <span class="panel-icon">▸</span>
+                Input Domain / Brand
+              </div>
+              <span class="panel-badge">1 domain / baris</span>
+            </div>
+            <div class="panel-body">
+              <textarea id="inputRawData" class="server-input" rows="5" placeholder="GENGTOTO&#10;geng39157.com&#10;wdmahjong38422.com" spellcheck="false"></textarea>
+              <div class="server-input-hint">
+                <span>ⓘ Data diproses secara lokal di browser</span>
               </div>
             </div>
+          </div>
 
-            <div class="result-container server-results">
-              <section class="server-panel server-panel-mapping" aria-labelledby="serverMappingTitle">
-                <div class="server-panel-header">
-                  <div>
-                    <h2 class="server-panel-title" id="serverMappingTitle">Domain PNG</h2>
-                    <p class="server-panel-subtitle">Domain yang berhasil dipetakan ke server</p>
-                  </div>
-                  <span class="server-result-count" id="pngDomainCount" aria-label="Jumlah server">03 SERVERS</span>
+          <div class="server-results">
+            <section class="panel server-panel-mapping" aria-labelledby="serverMappingTitle">
+              <div class="panel-header">
+                <div class="panel-header-title">
+                  <span class="panel-icon">◫</span>
+                  <span id="serverMappingTitle">Domain PNG</span>
                 </div>
+                <span class="panel-badge" id="pngDomainCount">03 SERVERS</span>
+              </div>
+              <div class="panel-body">
                 <div class="server-node-grid">
                   <article class="server-node" aria-labelledby="server1Title">
                     <div class="server-node-header">
-                      <div><h3 id="server1Title">SERVER 01</h3><span class="server-node-status">DNS TARGET</span></div>
-                      <button class="btn btn-secondary btn-sm server-copy-button" type="button" aria-label="Copy domain SERVER 1" title="Copy domain SERVER 1" onclick="copyServerMapping(1)"><span aria-hidden="true">⧉</span><span class="server-copy-label">Copy</span></button>
+                      <div>
+                        <h3 id="server1Title"><span class="server-node-dot"></span>SERVER 01</h3>
+                        <span class="server-node-status">DNS TARGET</span>
+                      </div>
+                      <button class="btn btn-sm btn-ghost server-copy-button" type="button" aria-label="Copy domain SERVER 1" data-copy-server="1" title="Copy domain SERVER 1">
+                        <span aria-hidden="true">⎘</span>
+                      </button>
                     </div>
                     <div class="server-ip-list">
                       <span class="server-ip-primary"><small>PRIMARY IP</small><strong>132.48.200.96</strong></span>
                       <span class="server-ip-secondary"><small>SECONDARY IP</small><strong>76.223.90.90</strong></span>
                     </div>
-                    <div class="server-node-count" id="server1Count">0 domain</div>
+                    <div class="server-node-count" id="server1Count">00 DOMAINS</div>
                     <div class="server-domain-list" id="server1Domains" role="list" aria-label="Domain SERVER 1"></div>
-                    <p class="server-list-hint"><kbd>↑</kbd> <kbd>↓</kbd> navigasi <kbd>Tab</kbd> berikutnya · <kbd>Ctrl</kbd>+<kbd>C</kbd> salin</p>
                   </article>
                   <article class="server-node" aria-labelledby="server2Title">
                     <div class="server-node-header">
-                      <div><h3 id="server2Title">SERVER 02</h3><span class="server-node-status">DNS TARGET</span></div>
-                      <button class="btn btn-secondary btn-sm server-copy-button" type="button" aria-label="Copy domain SERVER 2" title="Copy domain SERVER 2" onclick="copyServerMapping(2)"><span aria-hidden="true">⧉</span><span class="server-copy-label">Copy</span></button>
+                      <div>
+                        <h3 id="server2Title"><span class="server-node-dot"></span>SERVER 02</h3>
+                        <span class="server-node-status">DNS TARGET</span>
+                      </div>
+                      <button class="btn btn-sm btn-ghost server-copy-button" type="button" aria-label="Copy domain SERVER 2" data-copy-server="2" title="Copy domain SERVER 2">
+                        <span aria-hidden="true">⎘</span>
+                      </button>
                     </div>
                     <div class="server-ip-list">
                       <span class="server-ip-primary"><small>PRIMARY IP</small><strong>132.48.203.169</strong></span>
                       <span class="server-ip-secondary"><small>SECONDARY IP</small><strong>76.223.88.75</strong></span>
                     </div>
-                    <div class="server-node-count" id="server2Count">0 domain</div>
+                    <div class="server-node-count" id="server2Count">00 DOMAINS</div>
                     <div class="server-domain-list" id="server2Domains" role="list" aria-label="Domain SERVER 2"></div>
-                    <p class="server-list-hint"><kbd>↑</kbd> <kbd>↓</kbd> navigasi <kbd>Tab</kbd> berikutnya · <kbd>Ctrl</kbd>+<kbd>C</kbd> salin</p>
                   </article>
                   <article class="server-node" aria-labelledby="server3Title">
                     <div class="server-node-header">
-                      <div><h3 id="server3Title">SERVER 03</h3><span class="server-node-status">DNS TARGET</span></div>
-                      <button class="btn btn-secondary btn-sm server-copy-button" type="button" aria-label="Copy domain SERVER 3" title="Copy domain SERVER 3" onclick="copyServerMapping(3)"><span aria-hidden="true">⧉</span><span class="server-copy-label">Copy</span></button>
+                      <div>
+                        <h3 id="server3Title"><span class="server-node-dot"></span>SERVER 03</h3>
+                        <span class="server-node-status">DNS TARGET</span>
+                      </div>
+                      <button class="btn btn-sm btn-ghost server-copy-button" type="button" aria-label="Copy domain SERVER 3" data-copy-server="3" title="Copy domain SERVER 3">
+                        <span aria-hidden="true">⎘</span>
+                      </button>
                     </div>
                     <div class="server-ip-list">
                       <span class="server-ip-primary"><small>PRIMARY IP</small><strong>75.2.67.164</strong></span>
                       <span class="server-ip-secondary"><small>SECONDARY IP</small><strong>3.33.129.68</strong></span>
                     </div>
-                    <div class="server-node-count" id="server3Count">0 domain</div>
+                    <div class="server-node-count" id="server3Count">00 DOMAINS</div>
                     <div class="server-domain-list" id="server3Domains" role="list" aria-label="Domain SERVER 3"></div>
-                    <p class="server-list-hint"><kbd>↑</kbd> <kbd>↓</kbd> navigasi <kbd>Tab</kbd> berikutnya · <kbd>Ctrl</kbd>+<kbd>C</kbd> salin</p>
                   </article>
                 </div>
-              </section>
-
-              <section class="server-panel server-panel-idn" aria-labelledby="idnDomainTitle">
-                <div class="server-panel-header">
-                  <div>
-                    <h2 class="server-panel-title" id="idnDomainTitle">Domain IDN</h2>
-                    <p class="server-panel-subtitle">Domain yang belum cocok dengan server</p>
-                  </div>
-                  <span class="server-result-count" id="idnDomainCount" aria-live="polite">00 DOMAINS</span>
-                </div>
-                <div class="server-idn-list" id="outputIdnFallback" role="list" aria-label="Daftar domain IDN">
-                  <div class="server-empty-state">Belum ada domain IDN.</div>
-                </div>
-                <p class="server-list-hint"><kbd>↑</kbd> <kbd>↓</kbd> navigasi <kbd>Tab</kbd> berikutnya <kbd>Ctrl</kbd>+<kbd>C</kbd> salin · <kbd>Enter</kbd> salin</p>
-              </section>
-            </div>
-          </div>
-        </div>
-
-        <!-- TAB 5: REDIRECT LINK CHECKER -->
-        <div
-          id="tab-content-redirect"
-          class="tabs-content"
-          role="tabpanel"
-          aria-labelledby="tab-redirect"
-        >
-          <h1 class="page-title">Pengecek Redirect Link</h1>
-          <p class="redirect-intro">Masukkan tautan satu per baris, lalu klik domain pada daftar untuk melihat halaman di panel samping. Di kolom URL Asal, tekan Tab atau tombol panah atas/bawah untuk berpindah domain, Enter untuk membuka pratinjau, dan Ctrl+C untuk menyalin domain yang fokus.</p>
-
-          <details id="redirectInputPanel" class="redirect-input-panel" open>
-            <summary id="redirectInputTitle">Daftar Link <span>(satu link per baris)</span></summary>
-            <div class="redirect-input-content">
-              <textarea id="redirectUrlInput" rows="4" aria-labelledby="redirectInputTitle" placeholder="https://contoh.com&#10;contoh-domain.com"></textarea>
-              <div class="redirect-input-actions">
-                <button id="redirectProcessButton" class="btn btn-primary" type="button">Proses Daftar Link</button>
-                <p id="redirectProgress" role="status" aria-live="polite">Masukkan link untuk memulai.</p>
-              </div>
-            </div>
-          </details>
-
-          <div class="redirect-grid">
-            <section class="redirect-table-panel" aria-labelledby="redirectTableTitle">
-              <div class="redirect-panel-heading">
-                <h2 id="redirectTableTitle">Daftar Tautan</h2>
-                <div class="redirect-table-heading-actions">
-                  <button id="redirectCopyAllButton" class="redirect-copy-all-button" type="button">Copy Semua Domain</button>
-                  <button id="redirectExportButton" class="redirect-export-button" type="button">Ekspor CSV</button>
-                </div>
-              </div>
-              <div class="redirect-table-scroll">
-                <table>
-                  <thead>
-                    <tr><th scope="col">No</th><th scope="col">URL Asal</th><th scope="col">Aksi</th></tr>
-                  </thead>
-                  <tbody id="redirectTableBody">
-                    <tr><td colspan="3" class="redirect-empty">Belum ada link. Masukkan link lalu pilih Proses Daftar Link.</td></tr>
-                  </tbody>
-                </table>
               </div>
             </section>
 
-            <section class="redirect-preview-panel" aria-labelledby="redirectPreviewTitle">
-              <div class="redirect-panel-heading">
-                <h2 id="redirectPreviewTitle">Pratinjau Halaman</h2>
-                <span id="redirectActiveUrl" title="-">-</span>
+            <section class="panel server-panel-idn" aria-labelledby="idnDomainTitle">
+              <div class="panel-header">
+                <div class="panel-header-title">
+                  <span class="panel-icon">⧉</span>
+                  <span id="idnDomainTitle">Domain IDN</span>
+                </div>
+                <span class="panel-badge panel-badge-warn" id="idnDomainCount">00 DOMAINS</span>
+              </div>
+              <div class="panel-body">
+                <div class="server-idn-list" id="outputIdnFallback" role="list" aria-label="Daftar domain IDN">
+                  <div class="server-empty-state">Belum ada domain IDN.</div>
+                </div>
+              </div>
+            </section>
+          </div>
+        </div>
+
+        <!-- TAB 5: REDIRECT -->
+        <div id="tab-content-redirect" class="tabs-content" role="tabpanel" aria-labelledby="tab-redirect">
+          <div class="page-header">
+            <div class="page-header-left">
+              <div class="page-eyebrow">
+                <span class="page-eyebrow-dot"></span>
+                MODULE 04
+              </div>
+              <h2 class="page-title">Redirect Link Checker</h2>
+              <p class="page-desc">Pratinjau, buka, dan ekspor daftar tautan. Klik domain untuk melihat preview di panel samping.</p>
+            </div>
+            <div class="page-header-actions">
+              <button id="redirectExportButton" class="btn btn-ghost" type="button">
+                <span class="btn-icon">↓</span>
+                Ekspor CSV
+              </button>
+              <button id="redirectCopyAllButton" class="btn btn-secondary" type="button">
+                <span class="btn-icon">⎘</span>
+                Copy Domain
+              </button>
+            </div>
+          </div>
+
+          <div class="panel redirect-input-panel">
+            <div class="panel-header">
+              <div class="panel-header-title">
+                <span class="panel-icon">▸</span>
+                Daftar Link
+              </div>
+              <span class="panel-badge">1 link / baris</span>
+            </div>
+            <div class="panel-body">
+              <textarea id="redirectUrlInput" rows="4" placeholder="https://contoh.com&#10;contoh-domain.com" spellcheck="false"></textarea>
+              <div class="redirect-input-actions">
+                <p id="redirectProgress" role="status" aria-live="polite">Masukkan link untuk memulai.</p>
+                <button id="redirectProcessButton" class="btn btn-primary" type="button">
+                  <span class="btn-icon">▸</span>
+                  Proses Link
+                  <kbd class="btn-kbd">⌘↵</kbd>
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <div class="redirect-grid">
+            <section class="panel redirect-table-panel" aria-labelledby="redirectTableTitle">
+              <div class="panel-header">
+                <div class="panel-header-title">
+                  <span class="panel-icon">≡</span>
+                  <span id="redirectTableTitle">Daftar Tautan</span>
+                </div>
+                <span class="panel-badge" id="redirectCount">0 LINKS</span>
+              </div>
+              <div class="panel-body panel-body-flush">
+                <div class="redirect-table-scroll">
+                  <table>
+                    <thead>
+                      <tr>
+                        <th scope="col" class="col-num">#</th>
+                        <th scope="col">URL ASAL</th>
+                        <th scope="col" class="col-actions">AKSI</th>
+                      </tr>
+                    </thead>
+                    <tbody id="redirectTableBody">
+                      <tr>
+                        <td colspan="3" class="redirect-empty">
+                          <div class="empty-state">
+                            <div class="empty-state-icon">◌</div>
+                            <div class="empty-state-title">Belum ada link</div>
+                            <div class="empty-state-desc">Masukkan link lalu pilih Proses Link.</div>
+                          </div>
+                        </td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            </section>
+
+            <section class="panel redirect-preview-panel" aria-labelledby="redirectPreviewTitle">
+              <div class="panel-header">
+                <div class="panel-header-title">
+                  <span class="panel-icon">◉</span>
+                  <span id="redirectPreviewTitle">Pratinjau</span>
+                </div>
+              </div>
+              <div class="preview-meta">
+                <div class="preview-meta-row">
+                  <span class="preview-meta-label">DOMAIN</span>
+                  <strong id="redirectActiveDomain">Belum dipilih</strong>
+                </div>
+                <div class="preview-meta-row">
+                  <span class="preview-meta-label">URL</span>
+                  <span id="redirectActiveUrl" title="-">Pilih domain dari daftar</span>
+                </div>
               </div>
               <div class="redirect-preview-body">
-                <p id="redirectPreviewPlaceholder">Klik domain pada salah satu tautan untuk melihat halaman di sini. Beberapa situs membatasi tampilan dalam bingkai.</p>
+                <p id="redirectPreviewPlaceholder">
+                  <strong>Siap untuk pratinjau</strong>
+                  <span>Pilih domain pada daftar tautan untuk membuka halaman di sini.</span>
+                </p>
                 <iframe id="redirectPreviewFrame" title="Pratinjau halaman redirect" sandbox="allow-scripts allow-forms" hidden></iframe>
               </div>
             </section>
@@ -384,85 +610,119 @@
         </div>
 
         <!-- TAB 6: ABOUT -->
-        <div 
-          id="tab-content-about" 
-          class="tabs-content" 
-          role="tabpanel"
-          aria-labelledby="tab-about"
-        >
-          <h1 class="page-title">ℹ️ Tentang Aplikasi</h1>
-          <div class="about-content">
-            <p><strong>Domain Ops Console v2.0</strong> adalah alat manajemen domain yang dirancang untuk tim operasional.</p>
-            
-            <h2>Fitur Utama:</h2>
-            <ul>
-              <li><strong>🔍 Cek Pergantian Domain</strong> - Bandingkan data lama dan baru dengan validasi otomatis</li>
-              <li><strong>🗂 Filter Domain</strong> - Kelompokkan domain berdasarkan brand dengan auto-detection</li>
-              <li><strong>📊 DNS Parser</strong> - Pisahkan domain dan nameserver dari data mentah</li>
-              <li><strong>🔗 Pengecek Redirect Link</strong> - Pratinjau, buka, hapus, dan ekspor daftar tautan</li>
-              <li><strong>🌐 Server & Brand Mapping</strong> - Pemetaan otomatis server, brand, dan fallback IDN</li>
-            </ul>
-
-            <h2>Teknologi:</h2>
-            <ul>
-              <li>Vanilla JavaScript (ES6+)</li>
-              <li>CSS Custom Properties untuk theming</li>
-              <li>Clipboard API dengan fallback</li>
-              <li>ARIA accessibility support</li>
-            </ul>
+        <div id="tab-content-about" class="tabs-content" role="tabpanel" aria-labelledby="tab-about">
+          <div class="page-header">
+            <div class="page-header-left">
+              <div class="page-eyebrow">
+                <span class="page-eyebrow-dot"></span>
+                INFO
+              </div>
+              <h2 class="page-title">Tentang Aplikasi</h2>
+            </div>
+          </div>
+          <div class="panel">
+            <div class="panel-body prose">
+              <p><strong>Domain Ops Console v3.0</strong> adalah dashboard operasional domain untuk tim network intelligence.</p>
+              <h3>Modul</h3>
+              <ul>
+                <li><strong>Filter</strong> — Cek pergantian domain dengan validasi brand & tipe</li>
+                <li><strong>Filter Domain</strong> — Kelompokkan domain berdasarkan brand otomatis</li>
+                <li><strong>DNS Parser</strong> — Pisahkan domain dan nameserver dari data mentah</li>
+                <li><strong>Redirect</strong> — Pratinjau, buka, dan ekspor daftar tautan</li>
+                <li><strong>Server Map</strong> — Pemetaan otomatis server, brand, dan fallback IDN</li>
+              </ul>
+              <h3>Teknologi</h3>
+              <ul>
+                <li>Vanilla JavaScript (ES6+)</li>
+                <li>CSS Custom Properties &amp; Grid</li>
+                <li>Clipboard API + fallback</li>
+                <li>WAI-ARIA accessibility</li>
+              </ul>
+            </div>
           </div>
         </div>
 
         <!-- TAB 7: HELP -->
-        <div 
-          id="tab-content-help" 
-          class="tabs-content" 
-          role="tabpanel"
-          aria-labelledby="tab-help"
-        >
-          <h1 class="page-title">◎ Bantuan & Panduan</h1>
-          
-          <div class="help-content">
-            <section>
-              <h2>📖 Cara Penggunaan</h2>
-              
-              <h3>1. Cek Pergantian Domain</h3>
+        <div id="tab-content-help" class="tabs-content" role="tabpanel" aria-labelledby="tab-help">
+          <div class="page-header">
+            <div class="page-header-left">
+              <div class="page-eyebrow">
+                <span class="page-eyebrow-dot"></span>
+                HELP
+              </div>
+              <h2 class="page-title">Panduan Penggunaan</h2>
+            </div>
+          </div>
+          <div class="panel">
+            <div class="panel-body prose">
+              <h3>Keyboard Shortcuts</h3>
+              <ul>
+                <li><kbd>⌘</kbd>+<kbd>1</kbd> s/d <kbd>5</kbd> — Pindah modul</li>
+                <li><kbd>⌘</kbd>+<kbd>K</kbd> — Command palette</li>
+                <li><kbd>⌘</kbd>+<kbd>↵</kbd> — Jalankan aksi utama modul aktif</li>
+                <li><kbd>↑</kbd>/<kbd>↓</kbd> — Navigasi sel tabel</li>
+                <li><kbd>Ctrl</kbd>+<kbd>C</kbd> — Copy sel yang aktif</li>
+                <li><kbd>Esc</kbd> — Tutup command palette</li>
+              </ul>
+              <h3>Alur Kerja</h3>
               <ol>
-                <li>Masukkan data lama di kolom kiri dengan format: <code>[BRAND]</code> diikuti daftar domain</li>
-                <li>Masukkan data baru di kolom kanan dengan format yang sama</li>
-                <li>Klik <strong>CEK PERGANTIAN</strong> untuk membandingkan</li>
+                <li>Pilih modul dari sidebar (atau shortcut)</li>
+                <li>Tempel data di panel input kiri</li>
+                <li>Klik tombol aksi utama (atau <kbd>⌘↵</kbd>)</li>
+                <li>Hasil muncul di panel kanan / bawah</li>
+                <li>Gunakan tombol copy/ekspor untuk mengambil hasil</li>
               </ol>
-
-              <h3>2. Filter Domain</h3>
-              <ol>
-                <li>Tempelkan daftar domain di kolom kiri (satu per baris)</li>
-                <li>Hasil pengelompokan otomatis muncul di kolom kanan</li>
-              </ol>
-
-              <h3>3. DNS Parser</h3>
-              <ol>
-                <li>Tempelkan data mentah (domain + nameserver) di kolom kiri</li>
-                <li>Klik <strong>Proses</strong> untuk memisahkan data</li>
-              </ol>
-
-              <h3>4. Server & Brand Mapping</h3>
-              <ol>
-                <li>Tempelkan daftar brand atau domain mentah pada tab Server Mapping</li>
-                <li>Klik <strong>Proses Mapping</strong></li>
-                <li>Lihat domain yang berhasil dipetakan di Domain PNG dan domain yang belum cocok di Domain IDN</li>
-              </ol>
-
-              <h3>5. Pengecek Redirect Link</h3>
-              <ol>
-                <li>Tempelkan tautan satu per baris; tautan tanpa protokol akan dianggap menggunakan HTTPS</li>
-                <li>Pilih <strong>Proses Daftar Link</strong>, lalu klik domain untuk melihat pratinjau atau pilih Buka untuk membuka tautan di tab baru</li>
-                <li>Ekspor tautan valid ke CSV atau hapus baris yang tidak diperlukan</li>
-              </ol>
-              <p>Beberapa situs menolak ditampilkan dalam pratinjau karena kebijakan keamanan situs tersebut.</p>
-            </section>
+              <h3>Tips</h3>
+              <ul>
+                <li>Gunakan kolom pencarian di sidebar untuk menemukan modul dengan cepat</li>
+                <li>Klik domain di tabel untuk focus &amp; copy dengan <kbd>Ctrl</kbd>+<kbd>C</kbd></li>
+                <li>Semua aksi tercatat di console log bawah untuk audit</li>
+                <li>Beberapa situs menolak tampil di pratinjau karena kebijakan keamanan</li>
+              </ul>
+            </div>
           </div>
         </div>
       </main>
+    </div>
+
+    <div id="consoleLog" class="console-log" role="log" aria-live="polite">
+      <div class="console-header">
+        <div class="console-title">
+          <span class="console-icon">▸</span>
+          <span>CONSOLE</span>
+          <span class="console-count" id="consoleCount">0</span>
+        </div>
+        <div class="console-actions">
+          <button class="console-btn" id="consoleClearBtn" type="button" title="Clear log">Clear</button>
+          <button class="console-btn" id="consoleToggleBtn" type="button" title="Toggle console">−</button>
+        </div>
+      </div>
+      <div class="console-body" id="consoleBody">
+        <div class="console-line console-line-muted">
+          <span class="console-time">--:--:--</span>
+          <span class="console-msg">Console ready. Semua aksi akan tercatat di sini.</span>
+        </div>
+      </div>
+    </div>
+
+    <div id="copyFeedback" class="copy-feedback" role="alert" aria-live="assertive">
+      ✅ Disalin ke clipboard
+    </div>
+
+    <div id="cmdPalette" class="cmd-palette" hidden>
+      <div class="cmd-backdrop" data-close-palette></div>
+      <div class="cmd-window" role="dialog" aria-label="Command palette">
+        <div class="cmd-search">
+          <span class="cmd-search-icon">⌘</span>
+          <input id="cmdInput" class="cmd-input" type="text" placeholder="Ketik perintah atau modul..." autocomplete="off" />
+        </div>
+        <div class="cmd-list" id="cmdList"></div>
+        <div class="cmd-footer">
+          <span><kbd>↑</kbd><kbd>↓</kbd> navigasi</span>
+          <span><kbd>↵</kbd> buka</span>
+          <span><kbd>esc</kbd> tutup</span>
+        </div>
+      </div>
     </div>
 
     <script src="main.js"></script>
