@@ -21,6 +21,7 @@
     "tab-home": document.getElementById("tab-content-home"),
     "tab-profile": document.getElementById("tab-content-profile"),
     "tab-dns": document.getElementById("tab-content-dns"),
+    "tab-redirect": document.getElementById("tab-content-redirect"),
     "tab-server": document.getElementById("tab-content-server"), // <-- Ditambahkan di sini
     "tab-about": document.getElementById("tab-content-about"),
     "tab-help": document.getElementById("tab-content-help"),
@@ -30,12 +31,18 @@
     if (!activeBtn) return;
     const targetId = activeBtn.id;
 
-    navButtons.forEach((btn) => btn.classList.remove("active"));
+    navButtons.forEach((btn) => {
+      btn.classList.remove("active");
+      btn.setAttribute("aria-selected", "false");
+      btn.setAttribute("tabindex", "-1");
+    });
     Object.values(tabContents).forEach((content) => {
       if (content) content.classList.remove("active");
     });
 
     activeBtn.classList.add("active");
+    activeBtn.setAttribute("aria-selected", "true");
+    activeBtn.setAttribute("tabindex", "0");
     const targetContent = tabContents[targetId];
     if (targetContent) {
       targetContent.classList.add("active");
@@ -50,7 +57,235 @@
   }
   navButtons.forEach((btn) => {
     btn.addEventListener("click", () => switchTab(btn));
+    btn.addEventListener("keydown", (event) => {
+      let nextIndex = navButtons.indexOf(btn);
+      if (event.key === "ArrowDown" || event.key === "ArrowRight") {
+        nextIndex = (nextIndex + 1) % navButtons.length;
+      } else if (event.key === "ArrowUp" || event.key === "ArrowLeft") {
+        nextIndex = (nextIndex - 1 + navButtons.length) % navButtons.length;
+      } else if (event.key === "Home") {
+        nextIndex = 0;
+      } else if (event.key === "End") {
+        nextIndex = navButtons.length - 1;
+      } else {
+        return;
+      }
+
+      event.preventDefault();
+      const nextButton = navButtons[nextIndex];
+      switchTab(nextButton);
+      nextButton.focus();
+    });
   });
+
+  const redirectInput = document.getElementById("redirectUrlInput");
+  const redirectProcessButton = document.getElementById("redirectProcessButton");
+  const redirectCopyAllButton = document.getElementById("redirectCopyAllButton");
+  const redirectExportButton = document.getElementById("redirectExportButton");
+  const redirectTableBody = document.getElementById("redirectTableBody");
+  const redirectProgress = document.getElementById("redirectProgress");
+  const redirectPreviewFrame = document.getElementById("redirectPreviewFrame");
+  const redirectPreviewPlaceholder = document.getElementById("redirectPreviewPlaceholder");
+  const redirectActiveUrl = document.getElementById("redirectActiveUrl");
+  let redirectLinks = [];
+  let activeRedirectPreview = null;
+
+  function normalizeRedirectUrl(rawUrl) {
+    const withProtocol = /^[a-z][a-z\d+.-]*:/i.test(rawUrl) ? rawUrl : `https://${rawUrl}`;
+    const parsedUrl = new URL(withProtocol);
+    if (parsedUrl.protocol !== "http:" && parsedUrl.protocol !== "https:") {
+      throw new Error("Hanya tautan HTTP atau HTTPS yang didukung.");
+    }
+    return parsedUrl.href;
+  }
+
+  function renderRedirectLinks() {
+    if (!redirectTableBody) return;
+    redirectTableBody.replaceChildren();
+    if (activeRedirectPreview && !redirectLinks.includes(activeRedirectPreview)) {
+      activeRedirectPreview = null;
+      if (redirectPreviewFrame) {
+        redirectPreviewFrame.removeAttribute("src");
+        redirectPreviewFrame.hidden = true;
+      }
+      if (redirectPreviewPlaceholder) redirectPreviewPlaceholder.hidden = false;
+      if (redirectActiveUrl) {
+        redirectActiveUrl.textContent = "-";
+        redirectActiveUrl.title = "-";
+      }
+    }
+
+    if (redirectLinks.length === 0) {
+      const emptyRow = document.createElement("tr");
+      const emptyCell = document.createElement("td");
+      emptyCell.colSpan = 3;
+      emptyCell.className = "redirect-empty";
+      emptyCell.textContent = "Belum ada link. Masukkan link lalu pilih Proses Daftar Link.";
+      emptyRow.appendChild(emptyCell);
+      redirectTableBody.appendChild(emptyRow);
+      return;
+    }
+
+    redirectLinks.forEach((link, index) => {
+      const row = document.createElement("tr");
+      row.dataset.redirectIndex = String(index);
+
+      const numberCell = document.createElement("td");
+      numberCell.className = "redirect-row-number";
+      numberCell.textContent = String(index + 1);
+
+      const urlCell = document.createElement("td");
+      urlCell.className = "redirect-url-cell";
+      urlCell.textContent = link.source;
+      if (link.error) {
+        urlCell.title = link.error;
+        urlCell.classList.add("redirect-invalid-url");
+      }
+
+      const actionsCell = document.createElement("td");
+      actionsCell.className = "redirect-actions";
+      if (link.url) {
+        const previewButton = document.createElement("button");
+        previewButton.type = "button";
+        previewButton.className = "redirect-preview-button";
+        previewButton.title = "Pratinjau";
+        previewButton.setAttribute("aria-label", `Pratinjau ${link.source}`);
+        previewButton.innerHTML = '<svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></svg>';
+        previewButton.setAttribute("aria-expanded", String(activeRedirectPreview === link));
+        previewButton.addEventListener("click", () => showRedirectPreview(link, row));
+
+        const openLink = document.createElement("a");
+        openLink.className = "redirect-open-button";
+        openLink.href = link.url;
+        openLink.target = "_blank";
+        openLink.rel = "noopener noreferrer";
+        openLink.title = "Buka di tab baru";
+        openLink.setAttribute("aria-label", `Buka ${link.source} di tab baru`);
+        openLink.innerHTML = '<svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M14 3h7v7"/><path d="M10 14 21 3"/><path d="M19 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V7a2 2 0 0 1 2-2h6"/></svg>';
+        actionsCell.append(previewButton, openLink);
+      } else {
+        const errorMessage = document.createElement("span");
+        errorMessage.className = "redirect-error-label";
+        errorMessage.textContent = "URL tidak valid";
+        actionsCell.appendChild(errorMessage);
+      }
+
+      const deleteButton = document.createElement("button");
+      deleteButton.type = "button";
+      deleteButton.className = "redirect-delete-button";
+      deleteButton.title = "Hapus";
+      deleteButton.setAttribute("aria-label", `Hapus baris ${index + 1}`);
+      deleteButton.innerHTML = '<svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M8 6V4h8v2"/><path d="m19 6-1 14H6L5 6"/><path d="M10 11v5M14 11v5"/></svg>';
+      deleteButton.addEventListener("click", () => {
+        redirectLinks.splice(index, 1);
+        renderRedirectLinks();
+      });
+      actionsCell.appendChild(deleteButton);
+
+      row.append(numberCell, urlCell, actionsCell);
+      if (activeRedirectPreview === link) row.classList.add("redirect-row-active");
+      redirectTableBody.appendChild(row);
+    });
+  }
+
+  function processRedirectLinks() {
+    if (!redirectInput || !redirectProgress) return;
+    const rawUrls = redirectInput.value.split(/\r?\n/).map((url) => url.trim()).filter(Boolean);
+    if (rawUrls.length === 0) {
+      redirectProgress.textContent = "Masukkan minimal satu link terlebih dahulu.";
+      return;
+    }
+
+    let invalidCount = 0;
+    redirectLinks = rawUrls.map((source) => {
+      try {
+        return { source, url: normalizeRedirectUrl(source), error: "" };
+      } catch (error) {
+        invalidCount += 1;
+        return {
+          source,
+          url: "",
+          error: error instanceof Error ? error.message : "URL tidak valid.",
+        };
+      }
+    });
+    renderRedirectLinks();
+    redirectProgress.textContent = invalidCount
+      ? `${redirectLinks.length} link dimuat; ${invalidCount} link tidak valid.`
+      : `Berhasil memuat ${redirectLinks.length} link.`;
+  }
+
+  function showRedirectPreview(link, activeRow) {
+    if (!link || !link.url || !redirectPreviewFrame || !redirectPreviewPlaceholder || !redirectActiveUrl) return;
+    activeRedirectPreview = link;
+    redirectTableBody?.querySelectorAll("tr").forEach((row) => row.classList.remove("redirect-row-active"));
+    activeRow?.classList.add("redirect-row-active");
+    redirectPreviewPlaceholder.hidden = true;
+    redirectPreviewFrame.hidden = false;
+    redirectPreviewFrame.src = link.url;
+    redirectActiveUrl.textContent = link.source;
+    redirectActiveUrl.title = link.source;
+  }
+
+  function exportRedirectLinks() {
+    const validLinks = redirectLinks.filter((link) => link.url);
+    if (validLinks.length === 0) {
+      if (redirectProgress) redirectProgress.textContent = "Tidak ada link valid untuk diekspor.";
+      return;
+    }
+
+    const csvEscape = (value) => `"${value.replace(/"/g, '""')}"`;
+    const csv = ["URL Asal", ...validLinks.map((link) => csvEscape(link.source))].join("\r\n");
+    const blobUrl = URL.createObjectURL(new Blob(["\uFEFF", csv], { type: "text/csv;charset=utf-8" }));
+    const downloadLink = document.createElement("a");
+    downloadLink.href = blobUrl;
+    downloadLink.download = "daftar-link.csv";
+    downloadLink.click();
+    window.setTimeout(() => URL.revokeObjectURL(blobUrl), 1000);
+  }
+
+  async function copyAllRedirectLinks() {
+    if (!redirectProgress || redirectLinks.length === 0) {
+      if (redirectProgress) redirectProgress.textContent = "Belum ada domain untuk disalin.";
+      return;
+    }
+
+    const textToCopy = redirectLinks.map((link) => link.source).join("\n");
+    try {
+      if (!navigator.clipboard?.writeText) {
+        throw new Error("Clipboard API tidak tersedia.");
+      }
+      await navigator.clipboard.writeText(textToCopy);
+      redirectProgress.textContent = `Berhasil menyalin ${redirectLinks.length} domain.`;
+    } catch (error) {
+      const temporaryInput = document.createElement("textarea");
+      temporaryInput.value = textToCopy;
+      temporaryInput.setAttribute("readonly", "");
+      temporaryInput.style.position = "fixed";
+      temporaryInput.style.left = "-9999px";
+      document.body.appendChild(temporaryInput);
+      let copied = false;
+      try {
+        temporaryInput.select();
+        copied = document.execCommand("copy");
+      } catch (fallbackError) {
+        console.error("Clipboard fallback failed.", fallbackError);
+      } finally {
+        temporaryInput.remove();
+      }
+
+      if (!copied) {
+        redirectProgress.textContent = "Gagal menyalin domain. Silakan salin manual dari tabel.";
+        console.error("Unable to copy redirect links.", error);
+        return;
+      }
+      redirectProgress.textContent = `Berhasil menyalin ${redirectLinks.length} domain.`;
+    }
+  }
+
+  redirectCopyAllButton?.addEventListener("click", copyAllRedirectLinks);
+  redirectProcessButton?.addEventListener("click", processRedirectLinks);
+  redirectExportButton?.addEventListener("click", exportRedirectLinks);
 
   // ==========================================
   // 2. RULES PENGELOMPOKAN DOMAIN (Tab: Filter Domain)
@@ -759,12 +994,11 @@
       return;
     }
 
-    const combined = processedDomains.map((d, i) => `${d}\t${processedNS[i] || ""}`);
-    const textToCopy = combined.join("\n");
+    const textToCopy = processedDomains.join("\n");
 
     navigator.clipboard.writeText(textToCopy)
       .then(() => {
-        showFeedback(`✅ ${processedDomains.length} baris data disalin!`, "#1a73e8");
+        showFeedback(`✅ ${processedDomains.length} domain disalin!`, "#1a73e8");
       })
       .catch(() => {
         fallbackCopy(textToCopy);
@@ -788,52 +1022,24 @@
       });
   }
 
-  function copyActiveCell() {
-    const active = document.activeElement;
-    if (active && active.tagName === "TD" && active.hasAttribute("tabindex")) {
-      const text = active.textContent.trim();
-      if (text) {
-        navigator.clipboard.writeText(text)
-          .then(() => {
-            showFeedback(`✅ Disalin: "${text}"`, "#10b981");
-            setTimeout(() => active.focus(), 50);
-          })
-          .catch(() => {
-            fallbackCopy(text);
-            setTimeout(() => active.focus(), 50);
-          });
-      } else {
-        showFeedback("⚠️ Sel kosong", "#f59e0b");
-      }
-    } else {
-      showFeedback("👆 Klik sel terlebih dahulu", "#f59e0b");
-    }
-  }
-
-  function clearInput() {
-    inputData.value = "";
-    processedDomains = [];
-    processedNS = [];
-    lastFocusedCell = null;
-    renderTable();
-    inputData.focus();
-  }
-
-  document.getElementById("clearInputBtn")?.addEventListener("click", clearInput);
-  document.getElementById("processDataBtn")?.addEventListener("click", processData);
   document.getElementById("copyAllBtn")?.addEventListener("click", copyAllData);
-  document.getElementById("copyCellBtn")?.addEventListener("click", copyActiveCell);
   document.getElementById("copyNsBtn")?.addEventListener("click", copyNSOnly);
 
   document.addEventListener("copy", function (e) {
     const active = document.activeElement;
-    if (active && active.tagName === "TD" && active.hasAttribute("tabindex")) {
+    const isDnsCell = active && active.tagName === "TD" && active.hasAttribute("tabindex");
+    const isServerDomain = active && active.classList.contains("server-domain-cell");
+    if (isDnsCell || isServerDomain) {
       e.preventDefault();
-      const text = active.textContent.trim();
+      const text = isServerDomain ? active.dataset.domain : active.textContent.trim();
       if (text) {
         e.clipboardData.setData("text/plain", text);
-        showFeedback(`✅ Disalin: "${text}"`, "#10b981");
-        setTimeout(() => active.focus(), 50);
+        if (isServerDomain) {
+          showServerDomainCopied(active);
+        } else {
+          showFeedback(`✅ Disalin: "${text}"`, "#10b981");
+        }
+        if (isDnsCell) setTimeout(() => active.focus(), 50);
       } else {
         showFeedback("⚠️ Sel kosong", "#f59e0b");
       }
@@ -842,9 +1048,76 @@
 
   document.addEventListener("click", function (e) {
     const target = e.target;
+    const serverDomain = target instanceof Element ? target.closest(".server-domain-cell") : null;
+    if (serverDomain) {
+      serverDomain.focus();
+      return;
+    }
     if (target.tagName === "TD" && target.closest(".sheet-table") && target.hasAttribute("tabindex")) {
       target.focus();
       saveFocusedCell(target);
+    }
+  });
+
+  const serverDomainCopyTimeouts = new WeakMap();
+
+  function showServerDomainCopied(domainItem) {
+    domainItem.classList.add("is-copied");
+    const copiedIndicator = domainItem.querySelector(".server-domain-copied");
+    if (copiedIndicator) copiedIndicator.textContent = "✓ COPIED";
+
+    clearTimeout(serverDomainCopyTimeouts.get(domainItem));
+    const timeout = setTimeout(() => {
+      domainItem.classList.remove("is-copied");
+      if (copiedIndicator) copiedIndicator.textContent = "";
+      serverDomainCopyTimeouts.delete(domainItem);
+    }, 1000);
+    serverDomainCopyTimeouts.set(domainItem, timeout);
+  }
+
+  async function copyServerDomain(domainItem) {
+    const domain = domainItem.dataset.domain;
+    if (!domain) return;
+
+    try {
+      await navigator.clipboard.writeText(domain);
+      showServerDomainCopied(domainItem);
+    } catch (error) {
+      console.error("Gagal menyalin domain:", error);
+      fallbackCopy(domain);
+      showServerDomainCopied(domainItem);
+    }
+  }
+
+  document.addEventListener("keydown", function (event) {
+    const active = document.activeElement;
+    if (!(active instanceof HTMLElement) || !active.classList.contains("server-domain-cell")) return;
+
+    const list = active.parentElement;
+    const domains = Array.from(list.querySelectorAll(".server-domain-cell"));
+    const currentIndex = domains.indexOf(active);
+
+    if (event.key === "ArrowDown" || (event.key === "Tab" && !event.shiftKey)) {
+      const nextDomain = domains[currentIndex + 1];
+      if (nextDomain) {
+        event.preventDefault();
+        nextDomain.focus();
+      }
+      return;
+    }
+
+    if (event.key === "ArrowUp" || (event.key === "Tab" && event.shiftKey)) {
+      const previousDomain = domains[currentIndex - 1];
+      if (previousDomain) {
+        event.preventDefault();
+        previousDomain.focus();
+      }
+      return;
+    }
+
+    if (event.key === "Enter" || (event.key.toLowerCase() === "c" && event.ctrlKey)) {
+      event.preventDefault();
+      copyServerDomain(active);
     }
   });
 
@@ -852,6 +1125,12 @@
     const target = e.target;
     if (target.tagName === "TD" && target.hasAttribute("tabindex")) {
       saveFocusedCell(target);
+    }
+    if (target instanceof Element && target.classList.contains("server-domain-cell")) {
+      document.querySelectorAll(".server-domain-cell.is-focused").forEach(item => {
+        item.classList.remove("is-focused");
+      });
+      target.classList.add("is-focused");
     }
   });
 
@@ -887,6 +1166,62 @@
           brands: ["GENGTOTO", "FIATOGEL", "DINGDONGTOGEL", "TOGELUP"]
       }
   ];
+
+window.copyServerMapping = function(serverNumber) {
+      const domainsContainer = document.getElementById(`server${serverNumber}Domains`);
+      const domains = domainsContainer
+          ? Array.from(domainsContainer.querySelectorAll(".server-domain-cell"))
+              .map(domain => domain.dataset.domain)
+              .filter(Boolean)
+          : [];
+
+      if (domains.length === 0) {
+          showFeedback(`⚠️ Tidak ada data SERVER ${serverNumber} untuk disalin!`, "#ef4444");
+          return;
+      }
+
+      const textToCopy = domains.join('\n');
+      const clipboardWrite = navigator.clipboard
+          ? navigator.clipboard.writeText(textToCopy)
+          : Promise.reject(new Error("Clipboard API tidak tersedia"));
+
+      clipboardWrite
+          .then(() => showFeedback(`✅ ${domains.length} baris SERVER ${serverNumber} disalin!`, "#1a73e8"))
+          .catch(() => fallbackCopy(textToCopy));
+  };
+
+function renderServerDomainList(containerId, domains, emptyMessage) {
+      const container = document.getElementById(containerId);
+      if (!container) return;
+
+      container.replaceChildren();
+      if (domains.length === 0) {
+          const emptyState = document.createElement("div");
+          emptyState.className = "server-empty-state";
+          emptyState.textContent = emptyMessage;
+          container.appendChild(emptyState);
+          return;
+      }
+
+      domains.forEach(domain => {
+          const domainItem = document.createElement("div");
+          domainItem.className = "server-domain-cell";
+          domainItem.setAttribute("role", "listitem");
+          domainItem.setAttribute("tabindex", "0");
+          domainItem.dataset.domain = domain;
+
+          const domainText = document.createElement("span");
+          domainText.className = "server-domain-text";
+          domainText.textContent = domain;
+
+          const copiedIndicator = document.createElement("span");
+          copiedIndicator.className = "server-domain-copied";
+          copiedIndicator.setAttribute("aria-live", "polite");
+
+          domainItem.append(domainText, copiedIndicator);
+          container.appendChild(domainItem);
+      });
+  }
 
 window.processServerMapping = function() {
       const rawInput = document.getElementById('inputRawData').value;
@@ -945,25 +1280,23 @@ window.processServerMapping = function() {
           }
       });
 
-      const tbody = document.getElementById('serverMappingBody');
-      const maxRows = Math.max(server1Domains.length, server2Domains.length, server3Domains.length, 1);
-      let tableHtml = '';
-
-      for (let i = 0; i < maxRows; i++) {
-          let d1 = server1Domains[i] || '';
-          let d2 = server2Domains[i] || '';
-          let d3 = server3Domains[i] || '';
-
-          tableHtml += `
-              <tr>
-                  <td style="border: 1px solid var(--border-primary); padding: 8px; color: var(--accent-blue-light);">${d1}</td>
-                  <td style="border: 1px solid var(--border-primary); padding: 8px; color: var(--accent-blue-light);">${d2}</td>
-                  <td style="border: 1px solid var(--border-primary); padding: 8px; color: var(--accent-blue-light);">${d3}</td>
-              </tr>
-          `;
-      }
-
-      tbody.innerHTML = tableHtml;
-      document.getElementById('outputIdnFallback').value = idnFallbackResults.join('\n');
+      const serverDomains = [server1Domains, server2Domains, server3Domains];
+      serverDomains.forEach((domains, index) => {
+          const serverNumber = index + 1;
+          renderServerDomainList(
+              `server${serverNumber}Domains`,
+              domains,
+              "Belum ada domain untuk server ini."
+          );
+          document.getElementById(`server${serverNumber}Count`).textContent =
+              `${String(domains.length).padStart(2, "0")} ${domains.length === 1 ? "DOMAIN" : "DOMAINS"}`;
+      });
+      renderServerDomainList(
+          "outputIdnFallback",
+          idnFallbackResults,
+          "Belum ada domain IDN."
+      );
+      document.getElementById("idnDomainCount").textContent =
+          `${String(idnFallbackResults.length).padStart(2, "0")} DOMAINS`;
   };
 })();

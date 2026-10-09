@@ -11,10 +11,12 @@
     <!-- HEADER -->
     <header class="header" role="banner">
       <div class="header-brand">
-        <div>
+        <div class="header-brand-mark" aria-hidden="true">◈</div>
+        <div class="header-brand-copy">
           <h1>DOMAIN OPS CONSOLE</h1>
-          <p>Kelola data &amp; filter domain Anda di sini</p>
+          <p class="brand-sub">Network intelligence &amp; domain operations</p>
         </div>
+        <span class="brand-version">v2.0</span>
       </div>
       <div class="status-pill" role="status" aria-live="polite">
         <span class="status-dot" aria-hidden="true"></span>
@@ -26,70 +28,27 @@
     <!-- MAIN LAYOUT -->
     <div class="main-layout">
       <!-- SIDEBAR NAVBAR -->
-      <nav class="navbar" role="tablist" aria-label="Main navigation">
-        <div class="navbar-eyebrow">Pilihan layanan</div>
-        <button 
-          id="tab-home" 
-          class="navbar-button active" 
-          role="tab"
-          aria-selected="true"
-          aria-controls="tab-content-home"
-          tabindex="0"
-        >
-          ◈ FILTER
-        </button>
-        <button 
-          id="tab-profile" 
-          class="navbar-button" 
-          role="tab"
-          aria-selected="false"
-          aria-controls="tab-content-profile"
-          tabindex="-1"
-        >
-          ◇ FILTER DOMAIN
-        </button>
-        <button 
-          id="tab-dns" 
-          class="navbar-button" 
-          role="tab"
-          aria-selected="false"
-          aria-controls="tab-content-dns"
-          tabindex="-1"
-        >
-          ◈ DNS
-        </button>
-        <!-- Tombol Tab Baru: Server & Brand Mapping -->
-        <button 
-          id="tab-server" 
-          class="navbar-button" 
-          role="tab"
-          aria-selected="false"
-          aria-controls="tab-content-server"
-          tabindex="-1"
-        >
-          ◈ SERVER MAPPING
-        </button>
-        <button 
-          id="tab-about" 
-          class="navbar-button" 
-          role="tab"
-          aria-selected="false"
-          aria-controls="tab-content-about"
-          tabindex="-1"
-        >
-          ◇ ABOUT
-        </button>
-        <button 
-          id="tab-help" 
-          class="navbar-button" 
-          role="tab"
-          aria-selected="false"
-          aria-controls="tab-content-help"
-          tabindex="-1"
-        >
-          ◎ HELP
-        </button>
-      </nav>
+      <aside class="sidebar">
+        <nav class="navbar" role="tablist" aria-label="Main navigation">
+          <div class="navbar-section">
+            <div class="navbar-eyebrow">Operations</div>
+            <button id="tab-home" class="navbar-button active" role="tab" aria-selected="true" aria-controls="tab-content-home" tabindex="0">Filter</button>
+            <button id="tab-profile" class="navbar-button" role="tab" aria-selected="false" aria-controls="tab-content-profile" tabindex="-1">Filter Domain</button>
+            <button id="tab-dns" class="navbar-button" role="tab" aria-selected="false" aria-controls="tab-content-dns" tabindex="-1">DNS</button>
+            <button id="tab-redirect" class="navbar-button" role="tab" aria-selected="false" aria-controls="tab-content-redirect" tabindex="-1">Cek Redirect</button>
+            <button id="tab-server" class="navbar-button" role="tab" aria-selected="false" aria-controls="tab-content-server" tabindex="-1">Server Mapping</button>
+          </div>
+          <div class="navbar-section navbar-section-system">
+            <div class="navbar-eyebrow">System</div>
+            <button id="tab-about" class="navbar-button" role="tab" aria-selected="false" aria-controls="tab-content-about" tabindex="-1">Tentang</button>
+            <button id="tab-help" class="navbar-button" role="tab" aria-selected="false" aria-controls="tab-content-help" tabindex="-1">Panduan</button>
+          </div>
+        </nav>
+        <div class="navbar-footer">
+          <span class="status-dot" aria-hidden="true"></span>
+          <span>LOCAL WORKSPACE</span>
+        </div>
+      </aside>
 
       <!-- CONTENT AREA -->
       <main class="content" role="main">
@@ -223,14 +182,6 @@
                     aria-describedby="inputDataHelp"
                   ></textarea>
                   <span id="inputDataHelp" class="sr-only">Tempelkan data mentah domain dan nameserver</span>
-                  <div class="btn-group">
-                    <button class="btn btn-outline" id="clearInputBtn" aria-label="Bersihkan input">
-                      🧹 Bersihkan
-                    </button>
-                    <button class="btn btn-primary" id="processDataBtn" aria-label="Proses data">
-                      🔄 Proses
-                    </button>
-                  </div>
                 </div>
               </div>
 
@@ -260,14 +211,11 @@
                     </table>
                   </div>
                   <div class="btn-group">
-                    <button class="btn btn-copy-all" id="copyAllBtn" aria-label="Copy semua data (tab separated)">
-                      📋 Copy Semua (Tab)
+                    <button class="btn btn-copy-all" id="copyAllBtn" aria-label="Copy semua domain">
+                      📋 Copy Semua Domain
                     </button>
-                    <button class="btn btn-copy-cell" id="copyCellBtn" aria-label="Copy sel yang aktif">
-                      📄 Copy Sel Aktif
-                    </button>
-                    <button class="btn btn-success" id="copyNsBtn" aria-label="Copy nameserver saja">
-                      📋 Copy NS Saja
+                    <button class="btn btn-success" id="copyNsBtn" aria-label="Copy semua NS atau nameserver">
+                      📋 Copy Semua NS / Nameserver
                     </button>
                   </div>
                 </div>
@@ -298,49 +246,143 @@
         >
           <h1 class="page-title">🌐 Pusat Mapping Server & Brand</h1>
           <div class="container" style="padding: 0;">
-            <p style="color: var(--text-secondary); margin-bottom: 20px;">Masukkan daftar brand atau domain mentah di bawah ini. Sistem akan otomatis memetakannya ke 2 kotak hasil secara akurat.</p>
+            <p class="server-mapping-description">Masukkan daftar brand atau domain mentah untuk memetakannya ke server atau mengidentifikasi domain IDN.</p>
             
-            <div class="form-group" style="margin-bottom: 20px;">
-              <label for="inputRawData" style="display: block; font-weight: bold; margin-bottom: 8px;">Masukkan Data (Brand / Domain Mentah):</label>
-              <textarea id="inputRawData" rows="8" placeholder="Contoh:&#10;GENGTOTO&#10;geng39157.com&#10;wdmahjong38422.com&#10;..." style="width: 100%; padding: 12px; border-radius: 6px; background: var(--bg-secondary); color: var(--text-primary); border: 1px solid var(--border-primary); font-family: monospace;"></textarea>
-              <button onclick="processServerMapping()" class="btn btn-primary" style="margin-top: 12px;">🔄 Proses Mapping</button>
+            <div class="form-group server-input-panel">
+              <div class="server-input-heading">
+                <label for="inputRawData">Input Domain / Brand</label>
+                <span class="server-input-hint">Satu domain atau brand per baris</span>
+              </div>
+              <textarea id="inputRawData" class="server-input" rows="6" placeholder="> GENGTOTO&#10;> geng39157.com&#10;> wdmahjong38422.com"></textarea>
+              <div class="server-input-actions">
+                <span class="server-input-note">Data diproses secara lokal di browser</span>
+                <button onclick="processServerMapping()" class="btn btn-primary" type="button">Jalankan Mapping <span aria-hidden="true">→</span></button>
+              </div>
             </div>
 
-            <!-- 2 Kotak Hasil (Dual Output Box) -->
-            <div class="result-container" style="display: flex; gap: 20px; flex-wrap: wrap; margin-top: 20px;">
-                
-<!-- Kotak Hasil 1: Tabel Server Mapping -->
-<div class="result-box box-green" style="flex: 2; min-width: 500px;">
-    <h3 style="color: var(--accent-green); margin-top: 0; font-size: 15px;">Kotak 1: Mapping Berdasarkan Server</h3>
-    <div class="output-table-container" style="max-height: 400px; overflow-y: auto; border: 1px solid var(--border-primary); border-radius: 6px; background: var(--bg-input);">
-        <table class="sheet-table" id="serverMappingTable" style="width: 100%; border-collapse: collapse; font-family: var(--font-mono); font-size: 13px;">
-            <thead>
-                <tr style="background: var(--bg-tertiary); color: var(--text-secondary); text-align: center;">
-                    <th style="border: 1px solid var(--border-primary); padding: 8px;">SERVER 1<br><span style="font-size: 10px; color: var(--accent-blue-light);">132.48.200.96 | 76.223.90.90</span></th>
-                    <th style="border: 1px solid var(--border-primary); padding: 8px;">SERVER 2<br><span style="font-size: 10px; color: var(--accent-blue-light);">132.48.203.169 | 76.223.88.75</span></th>
-                    <th style="border: 1px solid var(--border-primary); padding: 8px;">SERVER 3<br><span style="font-size: 10px; color: var(--accent-blue-light);">75.2.67.164 | 3.33.129.68</span></th>
-                </tr>
-            </thead>
-            <tbody id="serverMappingBody">
-                <tr>
-                    <td colspan="3" style="text-align: center; padding: 20px; color: var(--text-tertiary); font-style: italic;">Hasil mapping server akan muncul di sini...</td>
-                </tr>
-            </tbody>
-        </table>
-    </div>
-</div>
-
-                <!-- Kotak Hasil 2: Domain Tanpa Brand / Fallback ke IDN -->
-                <div class="result-box box-orange" style="flex: 1; min-width: 300px; border: 2px solid #FF9800; padding: 15px; border-radius: 8px; background: rgba(255, 152, 0, 0.05);">
-                    <h3 style="color: #FF9800; margin-top: 0; font-size: 15px;">Kotak 2: Fallback ke IDN (Tidak Dikenali)</h3>
-                    <textarea id="outputIdnFallback" rows="12" readonly placeholder="Domain tanpa brand / masuk IDN..." style="width: 100%; padding: 10px; border-radius: 4px; background: var(--bg-secondary); color: var(--text-primary); border: 1px solid var(--border-primary); font-family: monospace; resize: vertical;"></textarea>
+            <div class="result-container server-results">
+              <section class="server-panel server-panel-mapping" aria-labelledby="serverMappingTitle">
+                <div class="server-panel-header">
+                  <div>
+                    <h2 class="server-panel-title" id="serverMappingTitle">Domain PNG</h2>
+                    <p class="server-panel-subtitle">Domain yang berhasil dipetakan ke server</p>
+                  </div>
+                  <span class="server-result-count" id="pngDomainCount" aria-label="Jumlah server">03 SERVERS</span>
                 </div>
+                <div class="server-node-grid">
+                  <article class="server-node" aria-labelledby="server1Title">
+                    <div class="server-node-header">
+                      <div><h3 id="server1Title">SERVER 01</h3><span class="server-node-status">DNS TARGET</span></div>
+                      <button class="btn btn-secondary btn-sm server-copy-button" type="button" aria-label="Copy domain SERVER 1" title="Copy domain SERVER 1" onclick="copyServerMapping(1)"><span aria-hidden="true">⧉</span><span class="server-copy-label">Copy</span></button>
+                    </div>
+                    <div class="server-ip-list">
+                      <span class="server-ip-primary"><small>PRIMARY IP</small><strong>132.48.200.96</strong></span>
+                      <span class="server-ip-secondary"><small>SECONDARY IP</small><strong>76.223.90.90</strong></span>
+                    </div>
+                    <div class="server-node-count" id="server1Count">0 domain</div>
+                    <div class="server-domain-list" id="server1Domains" role="list" aria-label="Domain SERVER 1"></div>
+                    <p class="server-list-hint"><kbd>↑</kbd> <kbd>↓</kbd> navigasi <kbd>Tab</kbd> berikutnya · <kbd>Ctrl</kbd>+<kbd>C</kbd> salin</p>
+                  </article>
+                  <article class="server-node" aria-labelledby="server2Title">
+                    <div class="server-node-header">
+                      <div><h3 id="server2Title">SERVER 02</h3><span class="server-node-status">DNS TARGET</span></div>
+                      <button class="btn btn-secondary btn-sm server-copy-button" type="button" aria-label="Copy domain SERVER 2" title="Copy domain SERVER 2" onclick="copyServerMapping(2)"><span aria-hidden="true">⧉</span><span class="server-copy-label">Copy</span></button>
+                    </div>
+                    <div class="server-ip-list">
+                      <span class="server-ip-primary"><small>PRIMARY IP</small><strong>132.48.203.169</strong></span>
+                      <span class="server-ip-secondary"><small>SECONDARY IP</small><strong>76.223.88.75</strong></span>
+                    </div>
+                    <div class="server-node-count" id="server2Count">0 domain</div>
+                    <div class="server-domain-list" id="server2Domains" role="list" aria-label="Domain SERVER 2"></div>
+                    <p class="server-list-hint"><kbd>↑</kbd> <kbd>↓</kbd> navigasi <kbd>Tab</kbd> berikutnya · <kbd>Ctrl</kbd>+<kbd>C</kbd> salin</p>
+                  </article>
+                  <article class="server-node" aria-labelledby="server3Title">
+                    <div class="server-node-header">
+                      <div><h3 id="server3Title">SERVER 03</h3><span class="server-node-status">DNS TARGET</span></div>
+                      <button class="btn btn-secondary btn-sm server-copy-button" type="button" aria-label="Copy domain SERVER 3" title="Copy domain SERVER 3" onclick="copyServerMapping(3)"><span aria-hidden="true">⧉</span><span class="server-copy-label">Copy</span></button>
+                    </div>
+                    <div class="server-ip-list">
+                      <span class="server-ip-primary"><small>PRIMARY IP</small><strong>75.2.67.164</strong></span>
+                      <span class="server-ip-secondary"><small>SECONDARY IP</small><strong>3.33.129.68</strong></span>
+                    </div>
+                    <div class="server-node-count" id="server3Count">0 domain</div>
+                    <div class="server-domain-list" id="server3Domains" role="list" aria-label="Domain SERVER 3"></div>
+                    <p class="server-list-hint"><kbd>↑</kbd> <kbd>↓</kbd> navigasi <kbd>Tab</kbd> berikutnya · <kbd>Ctrl</kbd>+<kbd>C</kbd> salin</p>
+                  </article>
+                </div>
+              </section>
 
+              <section class="server-panel server-panel-idn" aria-labelledby="idnDomainTitle">
+                <div class="server-panel-header">
+                  <div>
+                    <h2 class="server-panel-title" id="idnDomainTitle">Domain IDN</h2>
+                    <p class="server-panel-subtitle">Domain yang belum cocok dengan server</p>
+                  </div>
+                  <span class="server-result-count" id="idnDomainCount" aria-live="polite">00 DOMAINS</span>
+                </div>
+                <div class="server-idn-list" id="outputIdnFallback" role="list" aria-label="Daftar domain IDN">
+                  <div class="server-empty-state">Belum ada domain IDN.</div>
+                </div>
+                <p class="server-list-hint"><kbd>↑</kbd> <kbd>↓</kbd> navigasi <kbd>Tab</kbd> berikutnya <kbd>Ctrl</kbd>+<kbd>C</kbd> salin · <kbd>Enter</kbd> salin</p>
+              </section>
             </div>
           </div>
         </div>
 
-        <!-- TAB 5: ABOUT -->
+        <!-- TAB 5: REDIRECT LINK CHECKER -->
+        <div
+          id="tab-content-redirect"
+          class="tabs-content"
+          role="tabpanel"
+          aria-labelledby="tab-redirect"
+        >
+          <h1 class="page-title">Pengecek Redirect Link</h1>
+          <p class="redirect-intro">Masukkan tautan satu per baris, lalu pilih Pratinjau untuk melihat halaman di panel samping.</p>
+
+          <section class="redirect-input-panel" aria-labelledby="redirectInputTitle">
+            <label id="redirectInputTitle" for="redirectUrlInput">Daftar Link <span>(satu link per baris)</span></label>
+            <textarea id="redirectUrlInput" rows="4" placeholder="https://contoh.com&#10;contoh-domain.com"></textarea>
+            <div class="redirect-input-actions">
+              <button id="redirectProcessButton" class="btn btn-primary" type="button">Proses Daftar Link</button>
+              <p id="redirectProgress" role="status" aria-live="polite">Masukkan link untuk memulai.</p>
+            </div>
+          </section>
+
+          <div class="redirect-grid">
+            <section class="redirect-table-panel" aria-labelledby="redirectTableTitle">
+              <div class="redirect-panel-heading">
+                <h2 id="redirectTableTitle">Daftar Tautan</h2>
+                <div class="redirect-table-heading-actions">
+                  <button id="redirectCopyAllButton" class="redirect-copy-all-button" type="button">Copy Semua Domain</button>
+                  <button id="redirectExportButton" class="redirect-export-button" type="button">Ekspor CSV</button>
+                </div>
+              </div>
+              <div class="redirect-table-scroll">
+                <table>
+                  <thead>
+                    <tr><th scope="col">No</th><th scope="col">URL Asal</th><th scope="col">Aksi</th></tr>
+                  </thead>
+                  <tbody id="redirectTableBody">
+                    <tr><td colspan="3" class="redirect-empty">Belum ada link. Masukkan link lalu pilih Proses Daftar Link.</td></tr>
+                  </tbody>
+                </table>
+              </div>
+            </section>
+
+            <section class="redirect-preview-panel" aria-labelledby="redirectPreviewTitle">
+              <div class="redirect-panel-heading">
+                <h2 id="redirectPreviewTitle">Pratinjau Halaman</h2>
+                <span id="redirectActiveUrl" title="-">-</span>
+              </div>
+              <div class="redirect-preview-body">
+                <p id="redirectPreviewPlaceholder">Pilih Pratinjau pada salah satu tautan untuk melihat halaman di sini. Beberapa situs membatasi tampilan dalam bingkai.</p>
+                <iframe id="redirectPreviewFrame" title="Pratinjau halaman redirect" sandbox="allow-scripts allow-forms" hidden></iframe>
+              </div>
+            </section>
+          </div>
+        </div>
+
+        <!-- TAB 6: ABOUT -->
         <div 
           id="tab-content-about" 
           class="tabs-content" 
@@ -356,6 +398,7 @@
               <li><strong>🔍 Cek Pergantian Domain</strong> - Bandingkan data lama dan baru dengan validasi otomatis</li>
               <li><strong>🗂 Filter Domain</strong> - Kelompokkan domain berdasarkan brand dengan auto-detection</li>
               <li><strong>📊 DNS Parser</strong> - Pisahkan domain dan nameserver dari data mentah</li>
+              <li><strong>🔗 Pengecek Redirect Link</strong> - Pratinjau, buka, hapus, dan ekspor daftar tautan</li>
               <li><strong>🌐 Server & Brand Mapping</strong> - Pemetaan otomatis server, brand, dan fallback IDN</li>
             </ul>
 
@@ -369,7 +412,7 @@
           </div>
         </div>
 
-        <!-- TAB 6: HELP -->
+        <!-- TAB 7: HELP -->
         <div 
           id="tab-content-help" 
           class="tabs-content" 
@@ -405,8 +448,16 @@
               <ol>
                 <li>Tempelkan daftar brand atau domain mentah pada tab Server Mapping</li>
                 <li>Klik <strong>Proses Mapping</strong></li>
-                <li>Lihat hasil pemetaan di Kotak 1 (Terdeteksi) dan Kotak 2 (Fallback IDN)</li>
+                <li>Lihat domain yang berhasil dipetakan di Domain PNG dan domain yang belum cocok di Domain IDN</li>
               </ol>
+
+              <h3>5. Pengecek Redirect Link</h3>
+              <ol>
+                <li>Tempelkan tautan satu per baris; tautan tanpa protokol akan dianggap menggunakan HTTPS</li>
+                <li>Pilih <strong>Proses Daftar Link</strong>, lalu gunakan Pratinjau atau Buka untuk memeriksa tautan</li>
+                <li>Ekspor tautan valid ke CSV atau hapus baris yang tidak diperlukan</li>
+              </ol>
+              <p>Beberapa situs menolak ditampilkan dalam pratinjau karena kebijakan keamanan situs tersebut.</p>
             </section>
           </div>
         </div>
