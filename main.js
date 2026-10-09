@@ -11,40 +11,41 @@
       .replace(/'/g, "&#039;");
   }
 
-  // ═══════════════ AUTO-DETECT OS UNTUK LABEL SHORTCUT ═══════════════
+  function cleanDomain(raw) {
+    return String(raw)
+      .toLowerCase()
+      .replace(/^https?:\/\//i, "")
+      .replace(/^www\./i, "")
+      .split("/")[0]
+      .split("?")[0]
+      .trim();
+  }
+
+  // ═══════════════ OS DETECT ═══════════════
   const isMac = /Mac|iPhone|iPad|iPod/.test(navigator.platform || navigator.userAgent);
   const modKey = isMac ? "⌘" : "Ctrl";
   const enterKey = isMac ? "↵" : "Enter";
 
   function applyOSLabels() {
-    // Navbar shortcut (⌘1 → Ctrl+1, dst)
     document.querySelectorAll(".nb-shortcut").forEach((el) => {
       if (isMac) return;
       el.textContent = el.textContent.replace("⌘", modKey + "+");
     });
-
-    // Tombol kbd (⌘↵ → Ctrl+Enter)
     document.querySelectorAll(".btn-kbd").forEach((el) => {
       let t = el.textContent;
       t = t.replace("⌘", isMac ? "⌘" : "Ctrl+");
       t = t.replace("↵", isMac ? "↵" : "Enter");
       el.textContent = t;
     });
-
-    // Footer hint sidebar (⌘K palette · ⌘1-5 tabs)
     document.querySelectorAll(".navbar-footer-hint").forEach((el) => {
       if (isMac) return;
       el.innerHTML = el.innerHTML
         .replace(/⌘K/g, "Ctrl+K")
         .replace(/⌘1-5/g, "Ctrl+1-5");
     });
-
-    // Command palette footer
     document.querySelectorAll(".cmd-footer kbd").forEach((el) => {
       if (el.textContent === "⌘") el.textContent = isMac ? "⌘" : "Ctrl";
     });
-
-    // Help tab (Panduan)
     document.querySelectorAll("#tab-content-help kbd").forEach((el) => {
       const t = el.textContent.trim();
       if (t === "⌘") el.textContent = isMac ? "⌘" : "Ctrl";
@@ -90,11 +91,8 @@
     consoleBody.scrollTop = consoleBody.scrollHeight;
     logCount++;
     if (consoleCount) consoleCount.textContent = String(logCount);
-
     const excess = consoleBody.children.length - 200;
-    for (let i = 0; i < excess; i++) {
-      consoleBody.removeChild(consoleBody.firstChild);
-    }
+    for (let i = 0; i < excess; i++) consoleBody.removeChild(consoleBody.firstChild);
   }
 
   consoleClearBtn?.addEventListener("click", () => {
@@ -111,13 +109,10 @@
     consoleToggleBtn.textContent = consoleLog.classList.contains("collapsed") ? "+" : "−";
   });
 
-  log("Console ready. Semua aksi akan tercatat di sini.", "info");
-  log(`OS detected: ${isMac ? "macOS" : "Windows/Linux"} — shortcut: ${isMac ? "⌘" : "Ctrl"}`, "info");
+  log("Console ready.", "info");
+  log(`OS: ${isMac ? "macOS" : "Windows/Linux"} — shortcut: ${isMac ? "⌘" : "Ctrl"}`, "info");
 
-  // Apply OS-specific labels
-  applyOSLabels();
-
-  // ═══════════════ FEEDBACK TOAST ═══════════════
+  // ═══════════════ TOAST ═══════════════
   const feedback = document.getElementById("copyFeedback");
   function showFeedback(msg) {
     if (!feedback) return;
@@ -165,7 +160,6 @@
       btn.setAttribute("tabindex", "-1");
     });
     Object.values(tabContents).forEach((c) => c && c.classList.remove("active"));
-
     activeBtn.classList.add("active");
     activeBtn.setAttribute("aria-selected", "true");
     activeBtn.setAttribute("tabindex", "0");
@@ -174,7 +168,11 @@
       targetContent.classList.add("active");
       const mainContent = document.querySelector(".content");
       if (mainContent) mainContent.scrollTop = 0;
-      log(`Switched to module: ${tabNames[targetId] || targetId}`, "info");
+      if (consoleLog && consoleLog.classList.contains("collapsed")) {
+        consoleLog.classList.remove("collapsed");
+        if (consoleToggleBtn) consoleToggleBtn.textContent = "−";
+      }
+      log(`Switched to: ${tabNames[targetId] || targetId}`, "info");
     }
   }
 
@@ -207,7 +205,6 @@
       btn.tabIndex = matches ? 0 : -1;
       if (matches) visible++;
     });
-    if (q) log(`Search: "${q}" — ${visible} modul ditemukan.`, "info");
   });
 
   // ═══════════════ COMMAND PALETTE ═══════════════
@@ -219,18 +216,19 @@
   let previouslyFocused = null;
 
   function buildCommandItems() {
+    const s = isMac ? "⌘" : "Ctrl+";
     return [
-      { icon: "⟐", label: "Filter — Cek pergantian domain", hint: `${isMac ? "⌘" : "Ctrl+"}1`, action: () => switchTab(document.getElementById("tab-home")) },
-      { icon: "⊞", label: "Filter Domain — Kelompokkan by brand", hint: `${isMac ? "⌘" : "Ctrl+"}2`, action: () => switchTab(document.getElementById("tab-profile")) },
-      { icon: "◫", label: "DNS Parser — Pisahkan domain & NS", hint: `${isMac ? "⌘" : "Ctrl+"}3`, action: () => switchTab(document.getElementById("tab-dns")) },
-      { icon: "⇗", label: "Redirect — Pratinjau link", hint: `${isMac ? "⌘" : "Ctrl+"}4`, action: () => switchTab(document.getElementById("tab-redirect")) },
-      { icon: "◫", label: "Server Map — Mapping brand ke server", hint: `${isMac ? "⌘" : "Ctrl+"}5`, action: () => switchTab(document.getElementById("tab-server")) },
+      { icon: "⟐", label: "Filter — Cek pergantian domain", hint: s + "1", action: () => switchTab(document.getElementById("tab-home")) },
+      { icon: "⊞", label: "Filter Domain — Kelompokkan by brand", hint: s + "2", action: () => switchTab(document.getElementById("tab-profile")) },
+      { icon: "◫", label: "DNS Parser — Pisahkan domain & NS", hint: s + "3", action: () => switchTab(document.getElementById("tab-dns")) },
+      { icon: "⇗", label: "Redirect — Pratinjau link", hint: s + "4", action: () => switchTab(document.getElementById("tab-redirect")) },
+      { icon: "◫", label: "Server Map — Mapping brand ke server", hint: s + "5", action: () => switchTab(document.getElementById("tab-server")) },
       { icon: "ⓘ", label: "Tentang aplikasi", hint: "", action: () => switchTab(document.getElementById("tab-about")) },
       { icon: "?", label: "Panduan penggunaan", hint: "", action: () => switchTab(document.getElementById("tab-help")) },
       { icon: "▸", label: "Jalankan cek pergantian domain", hint: isMac ? "⌘↵" : "Ctrl+Enter", action: () => { switchTab(document.getElementById("tab-home")); setTimeout(performCheck, 100); } },
       { icon: "⎘", label: "Copy hasil grouping domain", hint: "", action: () => { switchTab(document.getElementById("tab-profile")); setTimeout(() => document.getElementById("btn-copy-output")?.click(), 100); } },
       { icon: "◇", label: "Clear console log", hint: "", action: () => consoleClearBtn?.click() },
-      { icon: "▸", label: "Jalankan server mapping", hint: `${isMac ? "⌘" : "Ctrl+"}5`, action: () => { switchTab(document.getElementById("tab-server")); setTimeout(() => window.processServerMapping?.(), 100); } },
+      { icon: "▸", label: "Jalankan server mapping", hint: s + "5", action: () => { switchTab(document.getElementById("tab-server")); setTimeout(() => window.processServerMapping?.(), 100); } },
       { icon: "↻", label: "Reset checker", hint: "", action: () => { switchTab(document.getElementById("tab-home")); setTimeout(resetChecker, 100); } },
     ];
   }
@@ -268,7 +266,6 @@
     cmdSelected = 0;
     renderCmdList(cmdItems);
     if (cmdInput) { cmdInput.value = ""; setTimeout(() => cmdInput.focus(), 20); }
-    log("Command palette dibuka.", "info");
   }
 
   function closeCommandPalette() {
@@ -287,20 +284,10 @@
   });
 
   cmdInput?.addEventListener("keydown", (e) => {
-    if (e.key === "ArrowDown") {
-      e.preventDefault();
-      cmdSelected = Math.min(cmdSelected + 1, cmdItems.length - 1);
-      updateCmdSelection();
-    } else if (e.key === "ArrowUp") {
-      e.preventDefault();
-      cmdSelected = Math.max(cmdSelected - 1, 0);
-      updateCmdSelection();
-    } else if (e.key === "Enter") {
-      e.preventDefault();
-      if (cmdItems[cmdSelected]) { cmdItems[cmdSelected].action(); closeCommandPalette(); }
-    } else if (e.key === "Escape") {
-      closeCommandPalette();
-    }
+    if (e.key === "ArrowDown") { e.preventDefault(); cmdSelected = Math.min(cmdSelected + 1, cmdItems.length - 1); updateCmdSelection(); }
+    else if (e.key === "ArrowUp") { e.preventDefault(); cmdSelected = Math.max(cmdSelected - 1, 0); updateCmdSelection(); }
+    else if (e.key === "Enter") { e.preventDefault(); if (cmdItems[cmdSelected]) { cmdItems[cmdSelected].action(); closeCommandPalette(); } }
+    else if (e.key === "Escape") { closeCommandPalette(); }
   });
 
   document.querySelectorAll("[data-close-palette]").forEach((el) => {
@@ -310,7 +297,6 @@
   // ═══════════════ KEYBOARD SHORTCUTS ═══════════════
   document.addEventListener("keydown", (e) => {
     const meta = e.metaKey || e.ctrlKey;
-
     if (meta && /^[1-5]$/.test(e.key)) {
       e.preventDefault();
       const idx = parseInt(e.key) - 1;
@@ -319,14 +305,12 @@
       if (target) switchTab(target);
       return;
     }
-
     if (meta && e.key.toLowerCase() === "k") {
       e.preventDefault();
       if (cmdPalette && !cmdPalette.hidden) closeCommandPalette();
       else openCommandPalette();
       return;
     }
-
     if (meta && e.key === "Enter") {
       const activeTab = document.querySelector(".tabs-content.active")?.id;
       if (activeTab === "tab-content-home") { e.preventDefault(); performCheck(); }
@@ -336,10 +320,7 @@
         if (typeof window.processServerMapping === "function") window.processServerMapping();
       }
     }
-
-    if (e.key === "Escape" && cmdPalette && !cmdPalette.hidden) {
-      closeCommandPalette();
-    }
+    if (e.key === "Escape" && cmdPalette && !cmdPalette.hidden) closeCommandPalette();
   });
 
   // ═══════════════ REDIRECT MODULE ═══════════════
@@ -351,17 +332,42 @@
   const redirectProgress = document.getElementById("redirectProgress");
   const redirectPreviewFrame = document.getElementById("redirectPreviewFrame");
   const redirectPreviewPlaceholder = document.getElementById("redirectPreviewPlaceholder");
+  const redirectPreviewLoading = document.getElementById("redirectPreviewLoading");
+  const redirectPreviewError = document.getElementById("redirectPreviewError");
+  const redirectLoadingDomain = document.getElementById("redirectLoadingDomain");
+  const redirectErrorDesc = document.getElementById("redirectErrorDesc");
+  const redirectOpenFromError = document.getElementById("redirectOpenFromError");
+  const redirectReloadButton = document.getElementById("redirectReloadButton");
+  const redirectOpenExternalButton = document.getElementById("redirectOpenExternalButton");
   const redirectActiveDomain = document.getElementById("redirectActiveDomain");
   const redirectActiveUrl = document.getElementById("redirectActiveUrl");
   const redirectCount = document.getElementById("redirectCount");
   let redirectLinks = [];
   let activeRedirectPreview = null;
+  let currentPreviewLink = null;
+  let previewLoadTimer = null;
+  const PREVIEW_TIMEOUT_MS = 12000;
 
   function normalizeRedirectUrl(rawUrl) {
     const withProtocol = /^[a-z][a-z\d+.-]*:/i.test(rawUrl) ? rawUrl : `https://${rawUrl}`;
     const u = new URL(withProtocol);
     if (u.protocol !== "http:" && u.protocol !== "https:") throw new Error("Hanya HTTP/HTTPS yang didukung.");
     return u.href;
+  }
+
+  function setPreviewState(state, extras = {}) {
+    if (redirectPreviewPlaceholder) redirectPreviewPlaceholder.hidden = state !== "placeholder";
+    if (redirectPreviewLoading) redirectPreviewLoading.hidden = state !== "loading";
+    if (redirectPreviewError) redirectPreviewError.hidden = state !== "error";
+    if (redirectPreviewFrame) {
+      redirectPreviewFrame.hidden = state !== "iframe";
+      if (state !== "iframe") redirectPreviewFrame.classList.remove("is-loaded");
+    }
+    const hasUrl = state === "iframe" || state === "loading" || state === "error";
+    if (redirectReloadButton) redirectReloadButton.disabled = !hasUrl;
+    if (redirectOpenExternalButton) redirectOpenExternalButton.disabled = !hasUrl;
+    if (extras.loadingDomain && redirectLoadingDomain) redirectLoadingDomain.textContent = extras.loadingDomain;
+    if (extras.errorDesc && redirectErrorDesc) redirectErrorDesc.textContent = extras.errorDesc;
   }
 
   function renderRedirectLinks() {
@@ -371,8 +377,10 @@
 
     if (activeRedirectPreview && !redirectLinks.includes(activeRedirectPreview)) {
       activeRedirectPreview = null;
-      if (redirectPreviewFrame) { redirectPreviewFrame.hidden = true; redirectPreviewFrame.removeAttribute("src"); }
-      if (redirectPreviewPlaceholder) redirectPreviewPlaceholder.hidden = false;
+      currentPreviewLink = null;
+      if (previewLoadTimer) { clearTimeout(previewLoadTimer); previewLoadTimer = null; }
+      try { redirectPreviewFrame?.removeAttribute("src"); } catch (_) {}
+      setPreviewState("placeholder");
       if (redirectActiveUrl) { redirectActiveUrl.textContent = "Pilih domain dari daftar"; redirectActiveUrl.title = "-"; }
       if (redirectActiveDomain) redirectActiveDomain.textContent = "Belum dipilih";
     }
@@ -444,7 +452,7 @@
       delBtn.addEventListener("click", () => {
         redirectLinks.splice(index, 1);
         renderRedirectLinks();
-        log(`Link #${index + 1} dihapus dari daftar.`, "warn");
+        log(`Link #${index + 1} dihapus.`, "warn");
       });
       actionsCell.appendChild(delBtn);
 
@@ -476,28 +484,125 @@
     redirectProgress.textContent = invalid
       ? `${redirectLinks.length} link dimuat, ${invalid} tidak valid.`
       : `Berhasil memuat ${redirectLinks.length} link.`;
-    log(`Redirect: ${redirectLinks.length} link diproses${invalid ? `, ${invalid} invalid` : ""}.`, invalid ? "warn" : "success");
+    log(`Redirect: ${redirectLinks.length} diproses${invalid ? `, ${invalid} invalid` : ""}.`, invalid ? "warn" : "success");
   }
 
   function showRedirectPreview(link, activeRow) {
-    if (!link?.url || !redirectPreviewFrame || !redirectPreviewPlaceholder || !redirectActiveUrl || !redirectActiveDomain) return;
+    if (!link?.url || !redirectPreviewFrame) return;
     activeRedirectPreview = link;
+    currentPreviewLink = link;
+
+    if (previewLoadTimer) { clearTimeout(previewLoadTimer); previewLoadTimer = null; }
+
     redirectTableBody?.querySelectorAll("tr").forEach((r) => r.classList.remove("redirect-row-active"));
     redirectTableBody?.querySelectorAll(".redirect-domain-cell").forEach((d) => d.classList.remove("is-previewing"));
     activeRow?.classList.add("redirect-row-active");
     const activeDomain = activeRow?.querySelector(".redirect-domain-cell");
-    if (activeDomain) { activeDomain.classList.remove("is-previewing"); void activeDomain.offsetWidth; activeDomain.classList.add("is-previewing"); }
-    redirectPreviewPlaceholder.hidden = true;
-    redirectPreviewFrame.hidden = false;
-    redirectActiveDomain.textContent = link.domain;
-    redirectActiveUrl.textContent = link.url;
-    redirectActiveUrl.title = link.url;
-    redirectPreviewFrame.src = "about:blank";
-    window.requestAnimationFrame(() => {
-      if (activeRedirectPreview === link && !redirectPreviewFrame.hidden) redirectPreviewFrame.src = link.url;
-    });
+    if (activeDomain) {
+      activeDomain.classList.remove("is-previewing");
+      void activeDomain.offsetWidth;
+      activeDomain.classList.add("is-previewing");
+    }
+
+    if (redirectActiveDomain) redirectActiveDomain.textContent = link.domain;
+    if (redirectActiveUrl) {
+      redirectActiveUrl.textContent = link.url;
+      redirectActiveUrl.title = link.url;
+    }
+
+    if (window.matchMedia("(max-width: 1024px)").matches) {
+      const previewPanel = document.querySelector(".redirect-preview-panel");
+      if (previewPanel) {
+        setTimeout(() => previewPanel.scrollIntoView({ behavior: "smooth", block: "start" }), 100);
+      }
+    }
+
+    setPreviewState("loading", { loadingDomain: link.domain });
+
+    try { redirectPreviewFrame.removeAttribute("src"); } catch (_) {}
+
+    setTimeout(() => {
+      if (currentPreviewLink !== link) return;
+      try {
+        redirectPreviewFrame.src = link.url;
+      } catch (e) {
+        setPreviewState("error", {
+          errorDesc: "URL tidak dapat dimuat. " + (e.message || ""),
+        });
+      }
+    }, 30);
+
+    if (!redirectPreviewFrame._handlersAttached) {
+      redirectPreviewFrame._handlersAttached = true;
+
+      redirectPreviewFrame.addEventListener("load", () => {
+        if (!currentPreviewLink) return;
+        const src = redirectPreviewFrame.src || "";
+        if (!src || src === "about:blank") return;
+
+        if (previewLoadTimer) { clearTimeout(previewLoadTimer); previewLoadTimer = null; }
+
+        let isEmpty = false;
+        try {
+          const doc = redirectPreviewFrame.contentDocument;
+          if (doc) {
+            const body = doc.body;
+            if (body && body.innerHTML.trim().length < 20) isEmpty = true;
+          }
+        } catch (_) {}
+
+        if (isEmpty) {
+          setPreviewState("error", {
+            errorDesc: "Situs ini menolak ditampilkan dalam bingkai (X-Frame-Options). Buka di tab baru untuk melihat.",
+          });
+          log(`Preview blocked: ${currentPreviewLink.domain}`, "warn");
+          return;
+        }
+
+        setPreviewState("iframe");
+        redirectPreviewFrame.classList.add("is-loaded");
+        log(`Preview loaded: ${currentPreviewLink.domain}`, "info");
+      });
+
+      redirectPreviewFrame.addEventListener("error", () => {
+        if (previewLoadTimer) { clearTimeout(previewLoadTimer); previewLoadTimer = null; }
+        setPreviewState("error", {
+          errorDesc: "Gagal memuat halaman. Coba buka di tab baru.",
+        });
+        log(`Preview failed to load`, "error");
+      });
+    }
+
+    previewLoadTimer = setTimeout(() => {
+      if (currentPreviewLink === link && !redirectPreviewFrame.classList.contains("is-loaded")) {
+        setPreviewState("error", {
+          errorDesc: "Waktu habis (12s). Situs mungkin memblokir iframe atau terlalu lambat. Coba buka di tab baru.",
+        });
+        log(`Preview timeout: ${link.domain}`, "warn");
+      }
+    }, PREVIEW_TIMEOUT_MS);
+
     log(`Preview: ${link.domain}`, "info");
   }
+
+  function reloadPreview() {
+    if (!currentPreviewLink) return;
+    log(`Reload preview: ${currentPreviewLink.domain}`, "info");
+    const link = currentPreviewLink;
+    const idx = redirectLinks.indexOf(link);
+    const row = redirectTableBody?.querySelector(`tr[data-redirect-index="${idx}"]`);
+    showRedirectPreview(link, row);
+  }
+
+  function openPreviewExternal() {
+    if (!currentPreviewLink?.url) return;
+    window.open(currentPreviewLink.url, "_blank", "noopener,noreferrer");
+    log(`Open external: ${currentPreviewLink.domain}`, "info");
+  }
+
+  redirectReloadButton?.addEventListener("click", reloadPreview);
+  redirectOpenExternalButton?.addEventListener("click", openPreviewExternal);
+  redirectOpenFromError?.addEventListener("click", openPreviewExternal);
 
   function previewFocusedRedirectDomain(domainEl) {
     const row = domainEl.closest("tr");
@@ -529,10 +634,7 @@
       redirectProgress.textContent = `Berhasil menyalin ${domains.length} domain.`;
       showFeedback(`✅ ${domains.length} domain disalin`);
       log(`Redirect copy: ${domains.length} domain`, "success");
-    } catch {
-      fallbackCopy(text);
-      redirectProgress.textContent = `Berhasil menyalin ${domains.length} domain.`;
-    }
+    } catch { fallbackCopy(text); redirectProgress.textContent = `Berhasil menyalin ${domains.length} domain.`; }
   }
 
   redirectCopyAllButton?.addEventListener("click", copyAllRedirectLinks);
@@ -587,7 +689,7 @@
     { brand: "YOKTOGEL", keywords: ["yoktogel", "yok"] },
     { brand: "YOWESTOGEL", keywords: ["yowestogel", "yowes"] },
     { brand: "PROTOGEL", keywords: ["protogel", "pro"] },
-    { brand: "MARIATOGEL", keywords: ["mariatogel", "maria"] },
+    { brand: "MARIATOGEL", keywords: ["mari", "maria"] },
     { brand: "ZIATOGEL", keywords: ["ziatogel", "zia"] },
     { brand: "DANATOTO", keywords: ["danatoto", "dana"] },
     { brand: "PARTAITOGEL", keywords: ["partaitogel", "partai"] },
@@ -598,14 +700,21 @@
   const domainInputEl = document.getElementById("domainInput");
   const outputEl = document.getElementById("output");
   const groupCount = document.getElementById("groupCount");
+  const domainInputCount = document.getElementById("domainInputCount");
 
   domainInputEl?.addEventListener("input", () => {
-    const rawdomains = domainInputEl.value.split(/[\n,\s]+/).map((d) => d.trim().toLowerCase()).filter((d) => d.length > 0);
+    const rawdomains = domainInputEl.value
+      .split(/[\n,\s]+/)
+      .map((d) => cleanDomain(d))
+      .filter((d) => d.length > 0 && d.includes("."));
+
+    if (domainInputCount) domainInputCount.textContent = `${rawdomains.length} domain${rawdomains.length === 1 ? "" : "s"}`;
+
     const grouped = {};
     rules.forEach((r) => (grouped[r.brand] = []));
 
     rawdomains.forEach((domain) => {
-      const domainLower = String(domain).toLowerCase();
+      const domainLower = domain.toLowerCase();
       let matched = null, longest = "";
       for (const rule of rules) {
         for (const kw of rule.keywords || []) {
@@ -620,9 +729,11 @@
 
     outputEl.innerHTML = "";
     let brandCount = 0;
+    let totalGrouped = 0;
     for (const [brand, domains] of Object.entries(grouped)) {
       if (domains.length > 0) {
         brandCount++;
+        totalGrouped += domains.length;
         let html = `<div class="brand-group"><div class="brand-header">${escapeHtml(brand)}</div>`;
         domains.forEach((d) => { html += `<div class="domain-item">${escapeHtml(d)}</div>`; });
         html += `</div>`;
@@ -632,7 +743,7 @@
     if (brandCount === 0) {
       outputEl.innerHTML = `<div class="empty-state"><div class="empty-state-icon">◌</div><div class="empty-state-title">Belum ada data</div><div class="empty-state-desc">Domain akan muncul otomatis di sini.</div></div>`;
     }
-    if (groupCount) groupCount.textContent = `${brandCount} BRAND${brandCount === 1 ? "" : "S"}`;
+    if (groupCount) groupCount.textContent = `${brandCount} BRAND${brandCount === 1 ? "" : "S"} · ${totalGrouped} DOMAIN${totalGrouped === 1 ? "" : "S"}`;
   });
 
   function copyToClipboard(text, btn) {
@@ -644,11 +755,8 @@
         setTimeout(() => { btn.innerHTML = orig; }, 1800);
       }
       showFeedback("✅ Disalin ke clipboard");
-      log("Copy to clipboard successful.", "success");
-    }).catch((err) => {
-      log(`Copy failed: ${err.message}`, "error");
-      fallbackCopy(text);
-    });
+      log("Copy successful.", "success");
+    }).catch(() => fallbackCopy(text));
   }
 
   document.getElementById("btn-copy-output")?.addEventListener("click", () => {
@@ -679,7 +787,7 @@
       const attached = line.match(/^([A-Z0-9\s]+?)([a-z0-9\-]+\.[a-z]{2,})$/);
       if (attached && !line.startsWith("[")) {
         const brand = attached[1].trim().toUpperCase();
-        const domain = attached[2].trim().toLowerCase();
+        const domain = cleanDomain(attached[2]);
         if (brand && brand.length <= 15) {
           current = aliases[brand] || brand;
           if (!map.has(current)) map.set(current, []);
@@ -695,11 +803,11 @@
         if (!map.has(current)) map.set(current, []);
         continue;
       }
-      const cleanDomain = line.toLowerCase().replace(/^https?:\/\//i, "").replace(/^www\./i, "").split("/")[0].trim();
-      if (cleanDomain && cleanDomain.includes(".")) {
+      const cleanDomainValue = cleanDomain(line);
+      if (cleanDomainValue && cleanDomainValue.includes(".")) {
         if (!map.has(current)) map.set(current, []);
         const list = map.get(current);
-        if (!list.includes(cleanDomain)) list.push(cleanDomain);
+        if (!list.includes(cleanDomainValue)) list.push(cleanDomainValue);
       }
     }
     if (map.has(" UMUM") && map.get(" UMUM").length === 0) map.delete(" UMUM");
@@ -714,6 +822,7 @@
     newMap.forEach((l) => totalNew += l.length);
     let valid = true;
     const reports = [];
+    let mismatchCount = 0;
     const getType = (d) => {
       const x = d.toLowerCase();
       if (x.includes("rtp")) return "RTP";
@@ -733,11 +842,11 @@
       if (match) {
         if (oldT.AMP !== newT.AMP || oldT.BLOG !== newT.BLOG || oldT.RTP !== newT.RTP || oldT["NORMAL / ANGKA"] !== newT["NORMAL / ANGKA"]) match = false;
       }
-      if (!match) valid = false;
+      if (!match) { valid = false; mismatchCount++; }
       reports.push({ brand, match, oldT, newT, oldCount: oldD.length, newCount: newD.length });
     });
     reports.sort((a, b) => a.brand.localeCompare(b.brand));
-    return { valid, totalOld, totalNew, reports };
+    return { valid, totalOld, totalNew, reports, mismatchCount };
   }
 
   function renderResult(result) {
@@ -750,6 +859,7 @@
     const kpiOld = document.getElementById("kpiOld");
     const kpiNew = document.getElementById("kpiNew");
     const kpiBrands = document.getElementById("kpiBrands");
+    const kpiBrandsSub = document.getElementById("kpiBrandsSub");
     if (!statusDiv || !reportDiv) return;
 
     if (!result) {
@@ -762,6 +872,7 @@
       if (kpiOld) kpiOld.textContent = "0";
       if (kpiNew) kpiNew.textContent = "0";
       if (kpiBrands) kpiBrands.textContent = "0";
+      if (kpiBrandsSub) kpiBrandsSub.textContent = "brand terdeteksi";
       return;
     }
 
@@ -770,18 +881,17 @@
       if (kpiStatus) { kpiStatus.textContent = "VALID"; kpiStatus.classList.add("valid"); kpiStatus.classList.remove("invalid"); }
       if (kpiStatusSub) kpiStatusSub.textContent = "Semua brand cocok";
       if (kpiStatusDot) kpiStatusDot.className = "kpi-dot valid";
-      log(`Verify: PASS — ${result.totalOld} → ${result.totalNew} domains matched.`, "success");
     } else {
       statusDiv.innerHTML = '<span class="status-badge invalid">✗ ADA JUMLAH ATAU JENIS LINK YANG MELENCENG</span>';
       if (kpiStatus) { kpiStatus.textContent = "FAIL"; kpiStatus.classList.add("invalid"); kpiStatus.classList.remove("valid"); }
-      if (kpiStatusSub) kpiStatusSub.textContent = "Ada mismatch";
+      if (kpiStatusSub) kpiStatusSub.textContent = `${result.mismatchCount} brand mismatch`;
       if (kpiStatusDot) kpiStatusDot.className = "kpi-dot invalid";
-      log(`Verify: FAIL — ada mismatch pada brand/jumlah.`, "error");
     }
     if (subtitle) subtitle.textContent = `${result.reports.length} brand dianalisis`;
     if (kpiOld) kpiOld.textContent = String(result.totalOld);
     if (kpiNew) kpiNew.textContent = String(result.totalNew);
-    if (kpiBrands) kpiBrands.textContent = String(result.reports.length);
+    if (kpiBrands) kpiBrands.textContent = String(result.reports.length - result.mismatchCount);
+    if (kpiBrandsSub) kpiBrandsSub.textContent = `dari ${result.reports.length} brand cocok`;
 
     let html = `<div class="total-domain"><span>Total Lama: <strong>${result.totalOld}</strong></span><span>Total Baru: <strong>${result.totalNew}</strong></span></div><div class="detail-grid">`;
     result.reports.forEach((b) => {
@@ -800,13 +910,14 @@
     });
     html += `</div>`;
     reportDiv.innerHTML = html;
+
+    log(`Verify: ${result.valid ? "PASS" : "FAIL"} — ${result.totalOld}→${result.totalNew} domain, ${result.mismatchCount} mismatch`, result.valid ? "success" : "error");
   }
 
   function performCheck() {
     const oldText = document.getElementById("oldData")?.value || "";
     const newText = document.getElementById("newData")?.value || "";
     if (!oldText.trim() && !newText.trim()) { alert("Harap isi data lama dan baru!"); return; }
-    log("Running verify...", "info");
     const result = compareData(oldText, newText);
     renderResult(result);
   }
@@ -838,7 +949,8 @@
     if (!inputData) return;
     const text = inputData.value;
     const lines = text.split("\n");
-    if (inputLineCount) inputLineCount.textContent = `${lines.filter((l) => l.trim()).length} lines`;
+    const nonEmpty = lines.filter((l) => l.trim()).length;
+    if (inputLineCount) inputLineCount.textContent = `${nonEmpty} lines`;
 
     if (renderTimeout) clearTimeout(renderTimeout);
     renderTimeout = setTimeout(() => {
@@ -1002,7 +1114,7 @@
       if (newRow) {
         const nc = newRow.querySelectorAll("td[tabindex]");
         const t = nc[nC] || nc[0];
-        if (t) { t.focus(); saveFocusedCell(t); }
+        if (t) { t.focus(); saveFocusedCell(t); t.scrollIntoView({ block: "nearest", behavior: "smooth" }); }
       }
     }
   });
@@ -1034,6 +1146,7 @@
 
   document.addEventListener("keydown", (e) => {
     const active = document.activeElement;
+    const meta = e.metaKey || e.ctrlKey;
     if (active?.classList?.contains("redirect-domain-cell")) {
       const list = Array.from(document.querySelectorAll("#redirectTableBody .redirect-domain-cell"));
       const i = list.indexOf(active);
@@ -1043,7 +1156,7 @@
         return;
       }
       if (e.key === "Enter") { e.preventDefault(); previewFocusedRedirectDomain(active); }
-      else if (e.key.toLowerCase() === "c" && e.ctrlKey) { e.preventDefault(); copyRedirectDomain(active); }
+      else if (e.key.toLowerCase() === "c" && meta) { e.preventDefault(); copyRedirectDomain(active); }
       return;
     }
     if (active?.classList?.contains("server-domain-cell")) {
@@ -1056,7 +1169,7 @@
       if (e.key === "ArrowUp" || (e.key === "Tab" && e.shiftKey)) {
         const p = items[i - 1]; if (p) { e.preventDefault(); p.focus(); } return;
       }
-      if (e.key === "Enter" || (e.key.toLowerCase() === "c" && e.ctrlKey)) {
+      if (e.key === "Enter" || (e.key.toLowerCase() === "c" && meta)) {
         e.preventDefault(); copyServerDomain(active);
       }
     }
@@ -1084,7 +1197,7 @@
     if (processedDomains.length === 0) { showFeedback("⚠ Tidak ada domain"); return; }
     navigator.clipboard.writeText(processedDomains.join("\n")).then(() => {
       showFeedback(`✅ ${processedDomains.length} domain disalin`);
-      log(`Copy all domains: ${processedDomains.length}`, "success");
+      log(`Copy all: ${processedDomains.length}`, "success");
     }).catch(() => fallbackCopy(processedDomains.join("\n")));
   });
 
@@ -1165,27 +1278,34 @@
     if (ic) ic.textContent = `${String(idn.length).padStart(2, "0")} DOMAINS`;
 
     log(`Server mapping: S1=${s1.length}, S2=${s2.length}, S3=${s3.length}, IDN=${idn.length}`, "success");
-    showFeedback(`✅ Mapping selesai: ${s1.length + s2.length + s3.length} domain terpetakan`);
+    showFeedback(`✅ Mapping: ${s1.length + s2.length + s3.length} domain terpetakan`);
   }
 
   function copyServerMapping(n) {
     const c = document.getElementById(`server${n}Domains`);
     const domains = c ? Array.from(c.querySelectorAll(".server-domain-cell")).map((d) => d.dataset.domain).filter(Boolean) : [];
-    if (domains.length === 0) { showFeedback(`⚠ Tidak ada data SERVER ${n}`); log(`Server ${n}: no data to copy.`, "warn"); return; }
+    if (domains.length === 0) { showFeedback(`⚠ Tidak ada data SERVER ${n}`); log(`Server ${n}: no data.`, "warn"); return; }
     const text = domains.join("\n");
     (navigator.clipboard ? navigator.clipboard.writeText(text) : Promise.reject())
       .then(() => { showFeedback(`✅ ${domains.length} baris SERVER ${n} disalin`); log(`Server ${n} copied: ${domains.length}`, "success"); })
       .catch(() => fallbackCopy(text));
   }
 
-  // Wire up buttons via event listeners (no global scope)
   document.getElementById("runServerMappingBtn")?.addEventListener("click", processServerMapping);
   document.querySelectorAll("[data-copy-server]").forEach((btn) => {
     btn.addEventListener("click", () => copyServerMapping(Number(btn.dataset.copyServer)));
   });
 
-  // Expose for command palette + shortcuts
+  const inputRawData = document.getElementById("inputRawData");
+  const serverInputCount = document.getElementById("serverInputCount");
+  inputRawData?.addEventListener("input", () => {
+    const n = inputRawData.value.split("\n").filter((l) => l.trim()).length;
+    if (serverInputCount) serverInputCount.textContent = `${n} line${n === 1 ? "" : "s"}`;
+  });
+
   window.processServerMapping = processServerMapping;
   window.copyServerMapping = copyServerMapping;
+
+  applyOSLabels();
 
 })();

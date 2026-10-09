@@ -4,7 +4,7 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <link rel="icon" type="image/png" href="https://i.postimg.cc/m2NfTFpT/Gemini-Generated-Image-rib7lyrib7lyrib7.jpg">
-    <title>Domain Ops Console v3.0</title>
+    <title>Domain Ops Console v3.1</title>
     <link rel="stylesheet" href="styles.css" />
   </head>
   <body>
@@ -19,7 +19,7 @@
           <div class="header-brand-mark" aria-hidden="true">◈</div>
           <div class="header-brand-copy">
             <h1>domain-ops<span class="cursor-blink">_</span></h1>
-            <p class="brand-sub">v3.0 · network intelligence console</p>
+            <p class="brand-sub">v3.1 · network intelligence console</p>
           </div>
         </div>
       </div>
@@ -115,7 +115,7 @@
       </aside>
 
       <main class="content" role="main">
-        <!-- TAB 1: HOME / CHECKER -->
+        <!-- TAB 1: CHECKER -->
         <div id="tab-content-home" class="tabs-content active" role="tabpanel" aria-labelledby="tab-home">
           <div class="page-header">
             <div class="page-header-left">
@@ -170,7 +170,7 @@
                 <span class="kpi-icon">⊞</span>
               </div>
               <div class="kpi-value" id="kpiBrands">0</div>
-              <div class="kpi-sub">brand terdeteksi</div>
+              <div class="kpi-sub" id="kpiBrandsSub">brand terdeteksi</div>
             </div>
           </div>
 
@@ -253,7 +253,7 @@
                   <span class="panel-icon">▸</span>
                   Domain Input
                 </div>
-                <span class="panel-badge">1 domain / baris</span>
+                <span class="panel-badge" id="domainInputCount">0 domains</span>
               </div>
               <div class="panel-body">
                 <textarea
@@ -409,7 +409,7 @@
                 <span class="panel-icon">▸</span>
                 Input Domain / Brand
               </div>
-              <span class="panel-badge">1 domain / baris</span>
+              <span class="panel-badge" id="serverInputCount">0 lines</span>
             </div>
             <div class="panel-body">
               <textarea id="inputRawData" class="server-input" rows="5" placeholder="GENGTOTO&#10;geng39157.com&#10;wdmahjong38422.com" spellcheck="false"></textarea>
@@ -444,7 +444,7 @@
                       <span class="server-ip-primary"><small>PRIMARY IP</small><strong>132.48.200.96</strong></span>
                       <span class="server-ip-secondary"><small>SECONDARY IP</small><strong>76.223.90.90</strong></span>
                     </div>
-                    <div class="server-node-count" id="server1Count">00 DOMAINS</div>
+                    <div class="server-node-count" id="server1Count">0 domain</div>
                     <div class="server-domain-list" id="server1Domains" role="list" aria-label="Domain SERVER 1"></div>
                   </article>
                   <article class="server-node" aria-labelledby="server2Title">
@@ -461,7 +461,7 @@
                       <span class="server-ip-primary"><small>PRIMARY IP</small><strong>132.48.203.169</strong></span>
                       <span class="server-ip-secondary"><small>SECONDARY IP</small><strong>76.223.88.75</strong></span>
                     </div>
-                    <div class="server-node-count" id="server2Count">00 DOMAINS</div>
+                    <div class="server-node-count" id="server2Count">0 domain</div>
                     <div class="server-domain-list" id="server2Domains" role="list" aria-label="Domain SERVER 2"></div>
                   </article>
                   <article class="server-node" aria-labelledby="server3Title">
@@ -478,7 +478,7 @@
                       <span class="server-ip-primary"><small>PRIMARY IP</small><strong>75.2.67.164</strong></span>
                       <span class="server-ip-secondary"><small>SECONDARY IP</small><strong>3.33.129.68</strong></span>
                     </div>
-                    <div class="server-node-count" id="server3Count">00 DOMAINS</div>
+                    <div class="server-node-count" id="server3Count">0 domain</div>
                     <div class="server-domain-list" id="server3Domains" role="list" aria-label="Domain SERVER 3"></div>
                   </article>
                 </div>
@@ -491,7 +491,7 @@
                   <span class="panel-icon">⧉</span>
                   <span id="idnDomainTitle">Domain IDN</span>
                 </div>
-                <span class="panel-badge panel-badge-warn" id="idnDomainCount">00 DOMAINS</span>
+                <span class="panel-badge panel-badge-warn" id="idnDomainCount">0 domains</span>
               </div>
               <div class="panel-body">
                 <div class="server-idn-list" id="outputIdnFallback" role="list" aria-label="Daftar domain IDN">
@@ -587,6 +587,14 @@
                   <span class="panel-icon">◉</span>
                   <span id="redirectPreviewTitle">Pratinjau</span>
                 </div>
+                <div class="panel-header-actions">
+                  <button class="btn btn-sm btn-ghost" id="redirectReloadButton" type="button" title="Muat ulang preview" aria-label="Muat ulang preview" disabled>
+                    <span aria-hidden="true">↻</span>
+                  </button>
+                  <button class="btn btn-sm btn-ghost" id="redirectOpenExternalButton" type="button" title="Buka di tab baru" aria-label="Buka di tab baru" disabled>
+                    <span aria-hidden="true">↗</span>
+                  </button>
+                </div>
               </div>
               <div class="preview-meta">
                 <div class="preview-meta-row">
@@ -599,11 +607,36 @@
                 </div>
               </div>
               <div class="redirect-preview-body">
-                <p id="redirectPreviewPlaceholder">
-                  <strong>Siap untuk pratinjau</strong>
-                  <span>Pilih domain pada daftar tautan untuk membuka halaman di sini.</span>
-                </p>
-                <iframe id="redirectPreviewFrame" title="Pratinjau halaman redirect" sandbox="allow-scripts allow-forms" hidden></iframe>
+                <div id="redirectPreviewPlaceholder" class="preview-state">
+                  <div class="preview-state-icon">◉</div>
+                  <div class="preview-state-title">Siap untuk pratinjau</div>
+                  <div class="preview-state-desc">Pilih domain pada daftar tautan untuk membuka halaman di sini.</div>
+                </div>
+
+                <div id="redirectPreviewLoading" class="preview-state" hidden>
+                  <div class="preview-spinner" aria-hidden="true"></div>
+                  <div class="preview-state-title">Memuat halaman...</div>
+                  <div class="preview-state-desc" id="redirectLoadingDomain">-</div>
+                </div>
+
+                <div id="redirectPreviewError" class="preview-state" hidden>
+                  <div class="preview-state-icon preview-state-icon-error">⚠</div>
+                  <div class="preview-state-title">Tidak dapat memuat pratinjau</div>
+                  <div class="preview-state-desc" id="redirectErrorDesc">Situs ini kemungkinan menolak ditampilkan dalam bingkai.</div>
+                  <button class="btn btn-secondary" id="redirectOpenFromError" type="button">
+                    <span class="btn-icon">↗</span>
+                    Buka di tab baru
+                  </button>
+                </div>
+
+                <iframe
+                  id="redirectPreviewFrame"
+                  title="Pratinjau halaman redirect"
+                  sandbox="allow-scripts allow-forms allow-popups allow-popups-to-escape-sandbox"
+                  referrerpolicy="no-referrer"
+                  loading="eager"
+                  hidden
+                ></iframe>
               </div>
             </section>
           </div>
@@ -622,13 +655,13 @@
           </div>
           <div class="panel">
             <div class="panel-body prose">
-              <p><strong>Domain Ops Console v3.0</strong> adalah dashboard operasional domain untuk tim network intelligence.</p>
+              <p><strong>Domain Ops Console v3.1</strong> adalah dashboard operasional domain untuk tim network intelligence.</p>
               <h3>Modul</h3>
               <ul>
                 <li><strong>Filter</strong> — Cek pergantian domain dengan validasi brand & tipe</li>
                 <li><strong>Filter Domain</strong> — Kelompokkan domain berdasarkan brand otomatis</li>
                 <li><strong>DNS Parser</strong> — Pisahkan domain dan nameserver dari data mentah</li>
-                <li><strong>Redirect</strong> — Pratinjau, buka, dan ekspor daftar tautan</li>
+                <li><strong>Redirect</strong> — Pratinjau dengan loading & error handling, buka, dan ekspor daftar tautan</li>
                 <li><strong>Server Map</strong> — Pemetaan otomatis server, brand, dan fallback IDN</li>
               </ul>
               <h3>Teknologi</h3>
@@ -672,12 +705,18 @@
                 <li>Hasil muncul di panel kanan / bawah</li>
                 <li>Gunakan tombol copy/ekspor untuk mengambil hasil</li>
               </ol>
-              <h3>Tips</h3>
+              <h3>Tips Redirect Preview</h3>
+              <ul>
+                <li>Beberapa situs (Google, Facebook) menolak tampil dalam bingkai — gunakan tombol "Buka di tab baru"</li>
+                <li>Tombol ↻ (reload) untuk muat ulang preview</li>
+                <li>Tombol ↗ (external) untuk buka di tab baru</li>
+                <li>Preview timeout 12 detik — jika situs lambat, akan muncul error dengan opsi buka external</li>
+              </ul>
+              <h3>Tips Umum</h3>
               <ul>
                 <li>Gunakan kolom pencarian di sidebar untuk menemukan modul dengan cepat</li>
                 <li>Klik domain di tabel untuk focus &amp; copy dengan <kbd>Ctrl</kbd>+<kbd>C</kbd></li>
                 <li>Semua aksi tercatat di console log bawah untuk audit</li>
-                <li>Beberapa situs menolak tampil di pratinjau karena kebijakan keamanan</li>
               </ul>
             </div>
           </div>
