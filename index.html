@@ -94,7 +94,6 @@
 
             <div class="result-area" id="resultArea" role="region" aria-live="polite">
               <div id="statusContainer">
-                <span class="status-badge">⏳ Silakan tekan CEK</span>
               </div>
               <div id="reportContainer">
                 <div style="color: var(--text-faint); padding: 12px 0">
@@ -337,16 +336,18 @@
           aria-labelledby="tab-redirect"
         >
           <h1 class="page-title">Pengecek Redirect Link</h1>
-          <p class="redirect-intro">Masukkan tautan satu per baris, lalu pilih Pratinjau untuk melihat halaman di panel samping. Di kolom URL Asal, tekan Tab untuk berpindah domain dan Ctrl+C untuk menyalin domain yang fokus.</p>
+          <p class="redirect-intro">Masukkan tautan satu per baris, lalu klik domain pada daftar untuk melihat halaman di panel samping. Di kolom URL Asal, tekan Tab untuk berpindah domain dan Ctrl+C untuk menyalin domain yang fokus.</p>
 
-          <section class="redirect-input-panel" aria-labelledby="redirectInputTitle">
-            <label id="redirectInputTitle" for="redirectUrlInput">Daftar Link <span>(satu link per baris)</span></label>
-            <textarea id="redirectUrlInput" rows="4" placeholder="https://contoh.com&#10;contoh-domain.com"></textarea>
-            <div class="redirect-input-actions">
-              <button id="redirectProcessButton" class="btn btn-primary" type="button">Proses Daftar Link</button>
-              <p id="redirectProgress" role="status" aria-live="polite">Masukkan link untuk memulai.</p>
+          <details id="redirectInputPanel" class="redirect-input-panel" open>
+            <summary id="redirectInputTitle">Daftar Link <span>(satu link per baris)</span></summary>
+            <div class="redirect-input-content">
+              <textarea id="redirectUrlInput" rows="4" aria-labelledby="redirectInputTitle" placeholder="https://contoh.com&#10;contoh-domain.com"></textarea>
+              <div class="redirect-input-actions">
+                <button id="redirectProcessButton" class="btn btn-primary" type="button">Proses Daftar Link</button>
+                <p id="redirectProgress" role="status" aria-live="polite">Masukkan link untuk memulai.</p>
+              </div>
             </div>
-          </section>
+          </details>
 
           <div class="redirect-grid">
             <section class="redirect-table-panel" aria-labelledby="redirectTableTitle">
@@ -375,7 +376,7 @@
                 <span id="redirectActiveUrl" title="-">-</span>
               </div>
               <div class="redirect-preview-body">
-                <p id="redirectPreviewPlaceholder">Pilih Pratinjau pada salah satu tautan untuk melihat halaman di sini. Beberapa situs membatasi tampilan dalam bingkai.</p>
+                <p id="redirectPreviewPlaceholder">Klik domain pada salah satu tautan untuk melihat halaman di sini. Beberapa situs membatasi tampilan dalam bingkai.</p>
                 <iframe id="redirectPreviewFrame" title="Pratinjau halaman redirect" sandbox="allow-scripts allow-forms" hidden></iframe>
               </div>
             </section>
@@ -454,7 +455,7 @@
               <h3>5. Pengecek Redirect Link</h3>
               <ol>
                 <li>Tempelkan tautan satu per baris; tautan tanpa protokol akan dianggap menggunakan HTTPS</li>
-                <li>Pilih <strong>Proses Daftar Link</strong>, lalu gunakan Pratinjau atau Buka untuk memeriksa tautan</li>
+                <li>Pilih <strong>Proses Daftar Link</strong>, lalu klik domain untuk melihat pratinjau atau pilih Buka untuk membuka tautan di tab baru</li>
                 <li>Ekspor tautan valid ke CSV atau hapus baris yang tidak diperlukan</li>
               </ol>
               <p>Beberapa situs menolak ditampilkan dalam pratinjau karena kebijakan keamanan situs tersebut.</p>

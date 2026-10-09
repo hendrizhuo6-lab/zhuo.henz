@@ -79,6 +79,7 @@
   });
 
   const redirectInput = document.getElementById("redirectUrlInput");
+  const redirectInputPanel = document.getElementById("redirectInputPanel");
   const redirectProcessButton = document.getElementById("redirectProcessButton");
   const redirectCopyAllButton = document.getElementById("redirectCopyAllButton");
   const redirectExportButton = document.getElementById("redirectExportButton");
@@ -161,15 +162,6 @@
       const actionsCell = document.createElement("td");
       actionsCell.className = "redirect-actions";
       if (link.url) {
-        const previewButton = document.createElement("button");
-        previewButton.type = "button";
-        previewButton.className = "redirect-preview-button";
-        previewButton.title = "Pratinjau";
-        previewButton.setAttribute("aria-label", `Pratinjau ${link.source}`);
-        previewButton.innerHTML = '<svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></svg>';
-        previewButton.setAttribute("aria-expanded", String(activeRedirectPreview === link));
-        previewButton.addEventListener("click", () => showRedirectPreview(link, row));
-
         const openLink = document.createElement("a");
         openLink.className = "redirect-open-button";
         openLink.href = link.url;
@@ -178,7 +170,7 @@
         openLink.title = "Buka di tab baru";
         openLink.setAttribute("aria-label", `Buka ${link.source} di tab baru`);
         openLink.innerHTML = '<svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M14 3h7v7"/><path d="M10 14 21 3"/><path d="M19 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V7a2 2 0 0 1 2-2h6"/></svg>';
-        actionsCell.append(previewButton, openLink);
+        actionsCell.appendChild(openLink);
       } else {
         const errorMessage = document.createElement("span");
         errorMessage.className = "redirect-error-label";
@@ -209,7 +201,7 @@
     domainElement.className = "redirect-domain-cell";
     domainElement.setAttribute("role", "button");
     domainElement.setAttribute("tabindex", "0");
-    domainElement.setAttribute("aria-label", `Domain ${domain}. Tekan Ctrl+C untuk menyalin.`);
+    domainElement.setAttribute("aria-label", `Pratinjau halaman ${domain}. Tekan Ctrl+C untuk menyalin domain.`);
     domainElement.dataset.domain = domain;
     domainElement.textContent = displayText;
     return domainElement;
@@ -239,6 +231,7 @@
       }
     });
     renderRedirectLinks();
+    if (redirectInputPanel instanceof HTMLDetailsElement) redirectInputPanel.open = false;
     redirectProgress.textContent = invalidCount
       ? `${redirectLinks.length} link dimuat; ${invalidCount} link tidak valid.`
       : `Berhasil memuat ${redirectLinks.length} link.`;
@@ -610,7 +603,7 @@
     if (!statusDiv || !reportDiv) return;
 
     if (!result) {
-      statusDiv.innerHTML = '<span class="status-badge">⏳ Silakan tekan CEK</span>';
+      statusDiv.replaceChildren();
       reportDiv.innerHTML = '<div style="color: var(--text-secondary); padding: 12px 0;">Silakan masukkan data lama dan data baru, lalu klik CEK PERGANTIAN.</div>';
       return;
     }
@@ -1080,6 +1073,16 @@
 
   document.addEventListener("click", function (e) {
     const target = e.target;
+    const redirectDomain = target instanceof Element ? target.closest(".redirect-domain-cell") : null;
+    if (redirectDomain) {
+      redirectDomain.focus();
+      const activeRow = redirectDomain.closest("tr");
+      const linkIndex = Number(activeRow?.dataset.redirectIndex);
+      const link = redirectLinks[linkIndex];
+      if (link) showRedirectPreview(link, activeRow);
+      return;
+    }
+
     const serverDomain = target instanceof Element ? target.closest(".server-domain-cell") : null;
     if (serverDomain) {
       serverDomain.focus();
@@ -1134,7 +1137,12 @@
         }
         return;
       }
-      if (event.key === "Enter" || (event.key.toLowerCase() === "c" && event.ctrlKey)) {
+      if (event.key === "Enter") {
+        event.preventDefault();
+        const activeRow = active.closest("tr");
+        const link = redirectLinks[Number(activeRow?.dataset.redirectIndex)];
+        if (link) showRedirectPreview(link, activeRow);
+      } else if (event.key.toLowerCase() === "c" && event.ctrlKey) {
         event.preventDefault();
         copyRedirectDomain(active);
       }

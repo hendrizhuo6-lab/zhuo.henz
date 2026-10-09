@@ -2775,22 +2775,36 @@ textarea::placeholder {
 }
 
 .redirect-input-panel {
-    display: grid;
-    gap: 14px;
     padding: 22px;
     margin-bottom: 24px;
 }
 
-.redirect-input-panel label {
+.redirect-input-panel summary {
     color: var(--text-primary);
     font-size: 16px;
     font-weight: 700;
+    cursor: pointer;
 }
 
-.redirect-input-panel label span {
+.redirect-input-panel summary::marker {
+    color: var(--accent-blue-light);
+}
+
+.redirect-input-panel summary span {
     color: var(--text-tertiary);
     font-size: 13px;
     font-weight: 500;
+}
+
+.redirect-input-panel summary:focus-visible {
+    outline: 2px solid var(--accent-blue);
+    outline-offset: 4px;
+}
+
+.redirect-input-content {
+    display: grid;
+    gap: 14px;
+    margin-top: 14px;
 }
 
 .redirect-input-panel textarea {
@@ -2876,7 +2890,6 @@ textarea::placeholder {
 
 .redirect-export-button,
 .redirect-copy-all-button,
-.redirect-preview-button,
 .redirect-open-button,
 .redirect-delete-button {
     display: inline-flex;
@@ -2991,15 +3004,16 @@ textarea::placeholder {
 .redirect-domain-cell {
     border-radius: 3px;
     color: #c4d9ff;
-    cursor: copy;
+    cursor: pointer;
     outline: none;
+    transition: background var(--transition-speed), color var(--transition-speed), box-shadow var(--transition-speed);
 }
 
 .redirect-domain-cell:hover,
 .redirect-domain-cell:focus-visible {
-    background: rgba(107, 157, 242, 0.2);
-    color: #f3f7ff;
-    box-shadow: 0 0 0 2px rgba(107, 157, 242, 0.2);
+    background: var(--accent-blue-dim);
+    color: var(--accent-blue-light);
+    box-shadow: 0 0 0 2px rgba(91, 141, 239, 0.2);
 }
 
 .redirect-invalid-url,
@@ -3014,7 +3028,6 @@ textarea::placeholder {
     white-space: nowrap;
 }
 
-.redirect-preview-button,
 .redirect-open-button,
 .redirect-delete-button {
     width: 34px;
@@ -3026,21 +3039,11 @@ textarea::placeholder {
     vertical-align: middle;
 }
 
-.redirect-preview-button svg,
 .redirect-open-button svg,
 .redirect-delete-button svg {
     display: block;
     width: 18px;
     height: 18px;
-}
-
-.redirect-preview-button {
-    background: rgba(107, 157, 242, 0.2);
-    color: #c4d9ff;
-}
-
-.redirect-preview-button:hover {
-    background: rgba(107, 157, 242, 0.34);
 }
 
 .redirect-open-button {
