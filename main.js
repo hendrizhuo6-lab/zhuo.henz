@@ -330,10 +330,10 @@
   const redirectExportButton = document.getElementById("redirectExportButton");
   const redirectTableBody = document.getElementById("redirectTableBody");
   const redirectProgress = document.getElementById("redirectProgress");
-  const redirectPreviewFrame = document.getElementById("redirectPreviewFrame");
   const redirectPreviewPlaceholder = document.getElementById("redirectPreviewPlaceholder");
   const redirectPreviewLoading = document.getElementById("redirectPreviewLoading");
   const redirectPreviewError = document.getElementById("redirectPreviewError");
+  const redirectPreviewWebViewNotice = document.getElementById("redirectPreviewWebViewNotice");
   const redirectLoadingDomain = document.getElementById("redirectLoadingDomain");
   const redirectErrorDesc = document.getElementById("redirectErrorDesc");
   const redirectOpenFromError = document.getElementById("redirectOpenFromError");
@@ -347,6 +347,8 @@
   let currentPreviewLink = null;
   let previewLoadTimer = null;
   const PREVIEW_TIMEOUT_MS = 12000;
+  const desktopWebView = window.chrome?.webview;
+  let previewStatusHandlerAttached = false;
 
   function normalizeRedirectUrl(rawUrl) {
     const withProtocol = /^[a-z][a-z\d+.-]*:/i.test(rawUrl) ? rawUrl : `https://${rawUrl}`;
@@ -359,15 +361,49 @@
     if (redirectPreviewPlaceholder) redirectPreviewPlaceholder.hidden = state !== "placeholder";
     if (redirectPreviewLoading) redirectPreviewLoading.hidden = state !== "loading";
     if (redirectPreviewError) redirectPreviewError.hidden = state !== "error";
-    if (redirectPreviewFrame) {
-      redirectPreviewFrame.hidden = state !== "iframe";
-      if (state !== "iframe") redirectPreviewFrame.classList.remove("is-loaded");
-    }
-    const hasUrl = state === "iframe" || state === "loading" || state === "error";
+    if (redirectPreviewWebViewNotice) redirectPreviewWebViewNotice.hidden = state !== "webview";
+    const hasUrl = state === "webview" || state === "loading" || state === "error";
     if (redirectReloadButton) redirectReloadButton.disabled = !hasUrl;
     if (redirectOpenExternalButton) redirectOpenExternalButton.disabled = !hasUrl;
     if (extras.loadingDomain && redirectLoadingDomain) redirectLoadingDomain.textContent = extras.loadingDomain;
     if (extras.errorDesc && redirectErrorDesc) redirectErrorDesc.textContent = extras.errorDesc;
+  }
+
+  function requestDesktopPreview(link) {
+    if (!link?.url) return false;
+    if (!desktopWebView) {
+      setPreviewState("error", {
+        errorDesc: "WebView2 hanya tersedia saat dashboard dijalankan melalui aplikasi desktop Domain Ops Console.",
+      });
+      return false;
+    }
+    try {
+      if (!previewStatusHandlerAttached) {
+        desktopWebView.addEventListener("message", (event) => {
+          const message = event.data;
+          if (message?.type !== "preview-status" || !currentPreviewLink || message.url !== currentPreviewLink.url) return;
+          if (previewLoadTimer) { clearTimeout(previewLoadTimer); previewLoadTimer = null; }
+          if (message.success) {
+            setPreviewState("webview");
+            log(`WebView opened: ${currentPreviewLink.domain}`, "success");
+          } else {
+            setPreviewState("error", {
+              errorDesc: `Halaman tidak berhasil dimuat di WebView (${message.error || "kesalahan navigasi"}).`,
+            });
+            log(`WebView navigation failed: ${currentPreviewLink.domain}`, "error");
+          }
+        });
+        previewStatusHandlerAttached = true;
+      }
+      desktopWebView.postMessage({ type: "open-preview", url: link.url });
+      return true;
+    } catch (error) {
+      setPreviewState("error", {
+        errorDesc: `Tidak dapat membuka jendela WebView: ${error.message || "kesalahan tidak diketahui"}`,
+      });
+      log(`WebView request failed: ${link.domain}`, "error");
+      return false;
+    }
   }
 
   function renderRedirectLinks() {
@@ -379,7 +415,6 @@
       activeRedirectPreview = null;
       currentPreviewLink = null;
       if (previewLoadTimer) { clearTimeout(previewLoadTimer); previewLoadTimer = null; }
-      try { redirectPreviewFrame?.removeAttribute("src"); } catch (_) {}
       setPreviewState("placeholder");
       if (redirectActiveUrl) { redirectActiveUrl.textContent = "Pilih domain dari daftar"; redirectActiveUrl.title = "-"; }
       if (redirectActiveDomain) redirectActiveDomain.textContent = "Belum dipilih";
@@ -488,7 +523,7 @@
   }
 
   function showRedirectPreview(link, activeRow) {
-    if (!link?.url || !redirectPreviewFrame) return;
+    if (!link?.url) return;
     activeRedirectPreview = link;
     currentPreviewLink = link;
 
@@ -518,67 +553,15 @@
     }
 
     setPreviewState("loading", { loadingDomain: link.domain });
+    if (!requestDesktopPreview(link)) return;
 
-    try { redirectPreviewFrame.removeAttribute("src"); } catch (_) {}
-
-    setTimeout(() => {
-      if (currentPreviewLink !== link) return;
-      try {
-        redirectPreviewFrame.src = link.url;
-      } catch (e) {
-        setPreviewState("error", {
-          errorDesc: "URL tidak dapat dimuat. " + (e.message || ""),
-        });
-      }
-    }, 30);
-
-    if (!redirectPreviewFrame._handlersAttached) {
-      redirectPreviewFrame._handlersAttached = true;
-
-      redirectPreviewFrame.addEventListener("load", () => {
-        if (!currentPreviewLink) return;
-        const src = redirectPreviewFrame.src || "";
-        if (!src || src === "about:blank") return;
-
-        if (previewLoadTimer) { clearTimeout(previewLoadTimer); previewLoadTimer = null; }
-
-        let isEmpty = false;
-        try {
-          const doc = redirectPreviewFrame.contentDocument;
-          if (doc) {
-            const body = doc.body;
-            if (body && body.innerHTML.trim().length < 20) isEmpty = true;
-          }
-        } catch (_) {}
-
-        if (isEmpty) {
-          setPreviewState("error", {
-            errorDesc: "Situs ini menolak ditampilkan dalam bingkai (X-Frame-Options). Buka di tab baru untuk melihat.",
-          });
-          log(`Preview blocked: ${currentPreviewLink.domain}`, "warn");
-          return;
-        }
-
-        setPreviewState("iframe");
-        redirectPreviewFrame.classList.add("is-loaded");
-        log(`Preview loaded: ${currentPreviewLink.domain}`, "info");
-      });
-
-      redirectPreviewFrame.addEventListener("error", () => {
-        if (previewLoadTimer) { clearTimeout(previewLoadTimer); previewLoadTimer = null; }
-        setPreviewState("error", {
-          errorDesc: "Gagal memuat halaman. Coba buka di tab baru.",
-        });
-        log(`Preview failed to load`, "error");
-      });
-    }
-
+    if (previewLoadTimer) clearTimeout(previewLoadTimer);
     previewLoadTimer = setTimeout(() => {
-      if (currentPreviewLink === link && !redirectPreviewFrame.classList.contains("is-loaded")) {
+      if (currentPreviewLink === link) {
         setPreviewState("error", {
-          errorDesc: "Waktu habis (12s). Situs mungkin memblokir iframe atau terlalu lambat. Coba buka di tab baru.",
+          errorDesc: "Host WebView2 tidak merespons. Tutup lalu jalankan ulang aplikasi desktop.",
         });
-        log(`Preview timeout: ${link.domain}`, "warn");
+        previewLoadTimer = null;
       }
     }, PREVIEW_TIMEOUT_MS);
 
@@ -596,8 +579,10 @@
 
   function openPreviewExternal() {
     if (!currentPreviewLink?.url) return;
-    window.open(currentPreviewLink.url, "_blank", "noopener,noreferrer");
-    log(`Open external: ${currentPreviewLink.domain}`, "info");
+    if (requestDesktopPreview(currentPreviewLink)) {
+      setPreviewState("loading", { loadingDomain: currentPreviewLink.domain });
+      log(`Open in WebView: ${currentPreviewLink.domain}`, "info");
+    }
   }
 
   redirectReloadButton?.addEventListener("click", reloadPreview);

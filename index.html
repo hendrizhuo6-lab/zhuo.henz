@@ -511,7 +511,7 @@
                 MODULE 04
               </div>
               <h2 class="page-title">Redirect Link Checker</h2>
-              <p class="page-desc">Pratinjau, buka, dan ekspor daftar tautan. Klik domain untuk melihat preview di panel samping.</p>
+              <p class="page-desc">Buka tautan di jendela WebView aplikasi dan ekspor daftar tautan. Klik domain untuk membuka WebView.</p>
             </div>
             <div class="page-header-actions">
               <button id="redirectExportButton" class="btn btn-ghost" type="button">
@@ -585,13 +585,13 @@
               <div class="panel-header">
                 <div class="panel-header-title">
                   <span class="panel-icon">◉</span>
-                  <span id="redirectPreviewTitle">Pratinjau</span>
+                  <span id="redirectPreviewTitle">WebView</span>
                 </div>
                 <div class="panel-header-actions">
-                  <button class="btn btn-sm btn-ghost" id="redirectReloadButton" type="button" title="Muat ulang preview" aria-label="Muat ulang preview" disabled>
+                  <button class="btn btn-sm btn-ghost" id="redirectReloadButton" type="button" title="Muat ulang WebView" aria-label="Muat ulang WebView" disabled>
                     <span aria-hidden="true">↻</span>
                   </button>
-                  <button class="btn btn-sm btn-ghost" id="redirectOpenExternalButton" type="button" title="Buka di tab baru" aria-label="Buka di tab baru" disabled>
+                  <button class="btn btn-sm btn-ghost" id="redirectOpenExternalButton" type="button" title="Buka di WebView" aria-label="Buka di WebView" disabled>
                     <span aria-hidden="true">↗</span>
                   </button>
                 </div>
@@ -610,7 +610,7 @@
                 <div id="redirectPreviewPlaceholder" class="preview-state">
                   <div class="preview-state-icon">◉</div>
                   <div class="preview-state-title">Siap untuk pratinjau</div>
-                  <div class="preview-state-desc">Pilih domain pada daftar tautan untuk membuka halaman di sini.</div>
+                  <div class="preview-state-desc">Pilih domain pada daftar tautan untuk membukanya di jendela WebView aplikasi.</div>
                 </div>
 
                 <div id="redirectPreviewLoading" class="preview-state" hidden>
@@ -621,21 +621,19 @@
 
                 <div id="redirectPreviewError" class="preview-state" hidden>
                   <div class="preview-state-icon preview-state-icon-error">⚠</div>
-                  <div class="preview-state-title">Tidak dapat memuat pratinjau</div>
-                  <div class="preview-state-desc" id="redirectErrorDesc">Situs ini kemungkinan menolak ditampilkan dalam bingkai.</div>
+                  <div class="preview-state-title">WebView tidak tersedia</div>
+                  <div class="preview-state-desc" id="redirectErrorDesc">Jalankan aplikasi melalui host desktop WebView2 untuk membuka situs di dalam aplikasi.</div>
                   <button class="btn btn-secondary" id="redirectOpenFromError" type="button">
                     <span class="btn-icon">↗</span>
-                    Buka di tab baru
+                    Coba buka di WebView
                   </button>
                 </div>
 
-                <iframe
-                  id="redirectPreviewFrame"
-                  title="Pratinjau halaman redirect"
-                  sandbox="allow-scripts allow-forms allow-popups allow-popups-to-escape-sandbox allow-top-navigation-by-user-activation"
-                  loading="eager"
-                  hidden
-                ></iframe>
+                <div id="redirectPreviewWebViewNotice" class="preview-state preview-webview-notice" hidden>
+                  <div class="preview-state-icon">◉</div>
+                  <div class="preview-state-title">Halaman dibuka di WebView aplikasi</div>
+                  <div class="preview-state-desc">Jendela WebView2 terpisah sudah dibuka. Situs dimuat sebagai halaman utama, bukan di dalam iframe.</div>
+                </div>
               </div>
             </section>
           </div>
