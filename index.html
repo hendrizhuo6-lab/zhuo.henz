@@ -34,52 +34,52 @@
         </div>
         <div class="status-pill" role="status" aria-live="polite">
           <span class="status-dot" aria-hidden="true"></span>
-          <span>ONLINE</span>
+          <span>LOCAL</span>
         </div>
       </div>
     </header>
 
     <div class="main-layout">
       <aside class="sidebar">
-        <nav class="navbar" role="tablist" aria-label="Main navigation">
-          <div class="navbar-search" role="search">
-            <span class="navbar-search-icon" aria-hidden="true">⌕</span>
-            <input
-              type="text"
-              id="navSearch"
-              class="navbar-search-input"
-              placeholder="Cari modul..."
-              aria-label="Cari modul"
-              autocomplete="off"
-            />
-          </div>
+        <div class="navbar-search" role="search">
+          <span class="navbar-search-icon" aria-hidden="true">⌕</span>
+          <input
+            type="text"
+            id="navSearch"
+            class="navbar-search-input"
+            placeholder="Cari modul..."
+            aria-label="Cari modul"
+            autocomplete="off"
+          />
+        </div>
+        <nav class="navbar" aria-label="Navigasi modul">
 
           <div class="navbar-section">
             <div class="navbar-eyebrow">
               <span class="eyebrow-dot"></span>
               MODULES
             </div>
-            <button id="tab-home" class="navbar-button active" role="tab" aria-selected="true" aria-controls="tab-content-home" tabindex="0" data-keywords="filter compare check verifikasi pergantian">
+            <button id="tab-home" class="navbar-button active" aria-current="page" aria-controls="tab-content-home" data-keywords="filter compare check verifikasi pergantian">
               <span class="nb-icon">⟐</span>
               <span class="nb-label">Filter</span>
               <span class="nb-shortcut">⌘1</span>
             </button>
-            <button id="tab-profile" class="navbar-button" role="tab" aria-selected="false" aria-controls="tab-content-profile" tabindex="-1" data-keywords="group grup brand domain profile">
+            <button id="tab-profile" class="navbar-button" aria-controls="tab-content-profile" data-keywords="group grup brand domain profile">
               <span class="nb-icon">⊞</span>
               <span class="nb-label">Filter Domain</span>
               <span class="nb-shortcut">⌘2</span>
             </button>
-            <button id="tab-dns" class="navbar-button" role="tab" aria-selected="false" aria-controls="tab-content-dns" tabindex="-1" data-keywords="dns nameserver ns parser">
+            <button id="tab-dns" class="navbar-button" aria-controls="tab-content-dns" data-keywords="dns nameserver ns parser">
               <span class="nb-icon">◫</span>
               <span class="nb-label">DNS Parser</span>
               <span class="nb-shortcut">⌘3</span>
             </button>
-            <button id="tab-redirect" class="navbar-button" role="tab" aria-selected="false" aria-controls="tab-content-redirect" tabindex="-1" data-keywords="redirect link url preview pratinjau">
+            <button id="tab-redirect" class="navbar-button" aria-controls="tab-content-redirect" data-keywords="redirect link url preview pratinjau">
               <span class="nb-icon">⇗</span>
               <span class="nb-label">Redirect</span>
               <span class="nb-shortcut">⌘4</span>
             </button>
-            <button id="tab-server" class="navbar-button" role="tab" aria-selected="false" aria-controls="tab-content-server" tabindex="-1" data-keywords="server mapping ip brand">
+            <button id="tab-server" class="navbar-button" aria-controls="tab-content-server" data-keywords="server mapping ip brand">
               <span class="nb-icon">◫</span>
               <span class="nb-label">Server Map</span>
               <span class="nb-shortcut">⌘5</span>
@@ -91,11 +91,11 @@
               <span class="eyebrow-dot"></span>
               SYSTEM
             </div>
-            <button id="tab-about" class="navbar-button" role="tab" aria-selected="false" aria-controls="tab-content-about" tabindex="-1" data-keywords="about tentang info">
+            <button id="tab-about" class="navbar-button" aria-controls="tab-content-about" data-keywords="about tentang info">
               <span class="nb-icon">ⓘ</span>
               <span class="nb-label">Tentang</span>
             </button>
-            <button id="tab-help" class="navbar-button" role="tab" aria-selected="false" aria-controls="tab-content-help" tabindex="-1" data-keywords="help panduan bantuan">
+            <button id="tab-help" class="navbar-button" aria-controls="tab-content-help" data-keywords="help panduan bantuan">
               <span class="nb-icon">?</span>
               <span class="nb-label">Panduan</span>
             </button>
@@ -116,7 +116,7 @@
 
       <main class="content" role="main">
         <!-- TAB 1: CHECKER -->
-        <div id="tab-content-home" class="tabs-content active" role="tabpanel" aria-labelledby="tab-home">
+        <div id="tab-content-home" class="tabs-content active" role="region" aria-labelledby="tab-home">
           <div class="page-header">
             <div class="page-header-left">
               <div class="page-eyebrow">
@@ -228,7 +228,7 @@
         </div>
 
         <!-- TAB 2: PROFILE -->
-        <div id="tab-content-profile" class="tabs-content" role="tabpanel" aria-labelledby="tab-profile">
+        <div id="tab-content-profile" class="tabs-content" role="region" aria-labelledby="tab-profile">
           <div class="page-header">
             <div class="page-header-left">
               <div class="page-eyebrow">
@@ -288,7 +288,7 @@
         </div>
 
         <!-- TAB 3: DNS -->
-        <div id="tab-content-dns" class="tabs-content" role="tabpanel" aria-labelledby="tab-dns">
+        <div id="tab-content-dns" class="tabs-content" role="region" aria-labelledby="tab-dns">
           <div class="page-header">
             <div class="page-header-left">
               <div class="page-eyebrow">
@@ -384,7 +384,7 @@
         </div>
 
         <!-- TAB 4: SERVER -->
-        <div id="tab-content-server" class="tabs-content" role="tabpanel" aria-labelledby="tab-server">
+        <div id="tab-content-server" class="tabs-content" role="region" aria-labelledby="tab-server">
           <div class="page-header">
             <div class="page-header-left">
               <div class="page-eyebrow">
@@ -395,9 +395,11 @@
               <p class="page-desc">Petakan domain ke server berdasarkan brand. Domain yang tidak cocok akan masuk ke fallback IDN.</p>
             </div>
             <div class="page-header-actions">
-              <button id="runServerMappingBtn" class="btn btn-primary" type="button">
-                <span class="btn-icon">▸</span>
-                Jalankan Mapping
+              <button id="runServerMappingBtn" class="btn btn-primary server-run-button" type="button">
+                <span class="server-run-icon" aria-hidden="true">⚙</span>
+                <span class="server-run-label">
+                  JALANKAN MAPPING
+                </span>
                 <kbd class="btn-kbd">⌘↵</kbd>
               </button>
             </div>
@@ -412,11 +414,22 @@
               <span class="panel-badge" id="serverInputCount">0 lines</span>
             </div>
             <div class="panel-body">
-              <textarea id="inputRawData" class="server-input" rows="5" placeholder="GENGTOTO&#10;geng39157.com&#10;wdmahjong38422.com" spellcheck="false"></textarea>
+              <textarea id="inputRawData" class="server-input" rows="5" placeholder="[WDBOS]&#10;domain-contoh123.com&#10;&#10;JUTAWANBET&#10;domain-contoh456.com" spellcheck="false"></textarea>
               <div class="server-input-hint">
-                <span>ⓘ Data diproses secara lokal di browser</span>
+                <span>ⓘ Baris brand berlaku untuk domain di bawahnya sampai brand berikutnya. Data diproses lokal.</span>
               </div>
             </div>
+          </div>
+
+          <div class="server-count-summary" role="status" aria-live="polite" aria-label="Ringkasan jumlah domain">
+            <div class="server-count-total">
+              <span>TOTAL DOMAIN</span>
+              <strong id="serverTotalCount">0</strong>
+            </div>
+            <div><span>SERVER 1</span><strong id="server1SummaryCount">0</strong></div>
+            <div><span>SERVER 2</span><strong id="server2SummaryCount">0</strong></div>
+            <div><span>SERVER 3</span><strong id="server3SummaryCount">0</strong></div>
+            <div><span>IDN</span><strong id="idnSummaryCount">0</strong></div>
           </div>
 
           <div class="server-results">
@@ -426,11 +439,21 @@
                   <span class="panel-icon">◫</span>
                   <span id="serverMappingTitle">Domain PNG</span>
                 </div>
-                <span class="panel-badge" id="pngDomainCount">03 SERVERS</span>
+                <div class="panel-header-actions">
+                  <button class="btn btn-sm btn-ghost" id="copyAllServerDomainsBtn" type="button" title="Copy semua domain SERVER 1–3" aria-label="Copy semua domain SERVER 1 sampai 3">
+                    <span aria-hidden="true">⎘</span>
+                    Copy Semua
+                  </button>
+                  <span class="panel-badge" id="pngDomainCount">03 SERVERS</span>
+                </div>
               </div>
               <div class="panel-body">
                 <div class="server-node-grid">
                   <article class="server-node" aria-labelledby="server1Title">
+                    <div class="server-ip-list">
+                      <span class="server-ip-primary"><small>PRIMARY IP</small><strong>13.248.200.96</strong></span>
+                      <span class="server-ip-secondary"><small>SECONDARY IP</small><strong>76.223.90.90</strong></span>
+                    </div>
                     <div class="server-node-header">
                       <div>
                         <h3 id="server1Title"><span class="server-node-dot"></span>SERVER 01</h3>
@@ -440,14 +463,14 @@
                         <span aria-hidden="true">⎘</span>
                       </button>
                     </div>
-                    <div class="server-ip-list">
-                      <span class="server-ip-primary"><small>PRIMARY IP</small><strong>132.48.200.96</strong></span>
-                      <span class="server-ip-secondary"><small>SECONDARY IP</small><strong>76.223.90.90</strong></span>
-                    </div>
                     <div class="server-node-count" id="server1Count">0 domain</div>
                     <div class="server-domain-list" id="server1Domains" role="list" aria-label="Domain SERVER 1"></div>
                   </article>
                   <article class="server-node" aria-labelledby="server2Title">
+                    <div class="server-ip-list">
+                      <span class="server-ip-primary"><small>PRIMARY IP</small><strong>13.248.203.169</strong></span>
+                      <span class="server-ip-secondary"><small>SECONDARY IP</small><strong>76.223.88.75</strong></span>
+                    </div>
                     <div class="server-node-header">
                       <div>
                         <h3 id="server2Title"><span class="server-node-dot"></span>SERVER 02</h3>
@@ -457,14 +480,14 @@
                         <span aria-hidden="true">⎘</span>
                       </button>
                     </div>
-                    <div class="server-ip-list">
-                      <span class="server-ip-primary"><small>PRIMARY IP</small><strong>132.48.203.169</strong></span>
-                      <span class="server-ip-secondary"><small>SECONDARY IP</small><strong>76.223.88.75</strong></span>
-                    </div>
                     <div class="server-node-count" id="server2Count">0 domain</div>
                     <div class="server-domain-list" id="server2Domains" role="list" aria-label="Domain SERVER 2"></div>
                   </article>
                   <article class="server-node" aria-labelledby="server3Title">
+                    <div class="server-ip-list">
+                      <span class="server-ip-primary"><small>PRIMARY IP</small><strong>75.2.67.164</strong></span>
+                      <span class="server-ip-secondary"><small>SECONDARY IP</small><strong>3.33.129.68</strong></span>
+                    </div>
                     <div class="server-node-header">
                       <div>
                         <h3 id="server3Title"><span class="server-node-dot"></span>SERVER 03</h3>
@@ -473,10 +496,6 @@
                       <button class="btn btn-sm btn-ghost server-copy-button" type="button" aria-label="Copy domain SERVER 3" data-copy-server="3" title="Copy domain SERVER 3">
                         <span aria-hidden="true">⎘</span>
                       </button>
-                    </div>
-                    <div class="server-ip-list">
-                      <span class="server-ip-primary"><small>PRIMARY IP</small><strong>75.2.67.164</strong></span>
-                      <span class="server-ip-secondary"><small>SECONDARY IP</small><strong>3.33.129.68</strong></span>
                     </div>
                     <div class="server-node-count" id="server3Count">0 domain</div>
                     <div class="server-domain-list" id="server3Domains" role="list" aria-label="Domain SERVER 3"></div>
@@ -491,7 +510,12 @@
                   <span class="panel-icon">⧉</span>
                   <span id="idnDomainTitle">Domain IDN</span>
                 </div>
-                <span class="panel-badge panel-badge-warn" id="idnDomainCount">0 domains</span>
+                <div class="panel-header-actions">
+                  <button class="btn btn-sm btn-ghost" id="copyIdnDomainsBtn" type="button" title="Copy semua domain IDN" aria-label="Copy semua domain IDN">
+                    <span aria-hidden="true">⎘</span>
+                  </button>
+                  <span class="panel-badge panel-badge-warn" id="idnDomainCount">0 domains</span>
+                </div>
               </div>
               <div class="panel-body">
                 <div class="server-idn-list" id="outputIdnFallback" role="list" aria-label="Daftar domain IDN">
@@ -503,7 +527,7 @@
         </div>
 
         <!-- TAB 5: REDIRECT -->
-        <div id="tab-content-redirect" class="tabs-content" role="tabpanel" aria-labelledby="tab-redirect">
+        <div id="tab-content-redirect" class="tabs-content" role="region" aria-labelledby="tab-redirect">
           <div class="page-header">
             <div class="page-header-left">
               <div class="page-eyebrow">
@@ -640,7 +664,7 @@
         </div>
 
         <!-- TAB 6: ABOUT -->
-        <div id="tab-content-about" class="tabs-content" role="tabpanel" aria-labelledby="tab-about">
+        <div id="tab-content-about" class="tabs-content" role="region" aria-labelledby="tab-about">
           <div class="page-header">
             <div class="page-header-left">
               <div class="page-eyebrow">
@@ -673,7 +697,7 @@
         </div>
 
         <!-- TAB 7: HELP -->
-        <div id="tab-content-help" class="tabs-content" role="tabpanel" aria-labelledby="tab-help">
+        <div id="tab-content-help" class="tabs-content" role="region" aria-labelledby="tab-help">
           <div class="page-header">
             <div class="page-header-left">
               <div class="page-eyebrow">
@@ -690,8 +714,8 @@
                 <li><kbd>⌘</kbd>+<kbd>1</kbd> s/d <kbd>5</kbd> — Pindah modul</li>
                 <li><kbd>⌘</kbd>+<kbd>K</kbd> — Command palette</li>
                 <li><kbd>⌘</kbd>+<kbd>↵</kbd> — Jalankan aksi utama modul aktif</li>
-                <li><kbd>↑</kbd>/<kbd>↓</kbd> — Navigasi sel tabel</li>
-                <li><kbd>Ctrl</kbd>+<kbd>C</kbd> — Copy sel yang aktif</li>
+                <li><kbd>↑</kbd>/<kbd>↓</kbd> — Navigasi sel DNS saat fokus di tabel</li>
+                <li><kbd>Ctrl</kbd>+<kbd>C</kbd> — Salin sel/domain yang sedang difokuskan</li>
                 <li><kbd>Esc</kbd> — Tutup command palette</li>
               </ul>
               <h3>Alur Kerja</h3>
@@ -704,41 +728,21 @@
               </ol>
               <h3>Tips Redirect Preview</h3>
               <ul>
-                <li>Beberapa situs (Google, Facebook) menolak tampil dalam bingkai — gunakan tombol "Buka di tab baru"</li>
-                <li>Tombol ↻ (reload) untuk muat ulang preview</li>
-                <li>Tombol ↗ (external) untuk buka di tab baru</li>
-                <li>Preview timeout 12 detik — jika situs lambat, akan muncul error dengan opsi buka external</li>
+                <li>Pilih domain untuk membukanya di jendela WebView2 terpisah pada aplikasi desktop</li>
+                <li>Tombol ↻ memuat ulang halaman di jendela WebView2</li>
+                <li>Tombol ↗ membuka kembali domain di jendela WebView2</li>
+                <li>Jika host tidak merespons, halaman menampilkan pesan error dan opsi untuk mencoba lagi</li>
               </ul>
               <h3>Tips Umum</h3>
               <ul>
                 <li>Gunakan kolom pencarian di sidebar untuk menemukan modul dengan cepat</li>
                 <li>Klik domain di tabel untuk focus &amp; copy dengan <kbd>Ctrl</kbd>+<kbd>C</kbd></li>
-                <li>Semua aksi tercatat di console log bawah untuk audit</li>
+                <li>Gunakan notifikasi untuk melihat hasil aksi proses dan salin</li>
               </ul>
             </div>
           </div>
         </div>
       </main>
-    </div>
-
-    <div id="consoleLog" class="console-log" role="log" aria-live="polite">
-      <div class="console-header">
-        <div class="console-title">
-          <span class="console-icon">▸</span>
-          <span>CONSOLE</span>
-          <span class="console-count" id="consoleCount">0</span>
-        </div>
-        <div class="console-actions">
-          <button class="console-btn" id="consoleClearBtn" type="button" title="Clear log">Clear</button>
-          <button class="console-btn" id="consoleToggleBtn" type="button" title="Toggle console">−</button>
-        </div>
-      </div>
-      <div class="console-body" id="consoleBody">
-        <div class="console-line console-line-muted">
-          <span class="console-time">--:--:--</span>
-          <span class="console-msg">Console ready. Semua aksi akan tercatat di sini.</span>
-        </div>
-      </div>
     </div>
 
     <div id="copyFeedback" class="copy-feedback" role="alert" aria-live="assertive">

@@ -72,44 +72,11 @@
   tick();
   setInterval(tick, 1000);
 
-  // ═══════════════ CONSOLE LOG ═══════════════
-  const consoleBody = document.getElementById("consoleBody");
-  const consoleCount = document.getElementById("consoleCount");
-  const consoleClearBtn = document.getElementById("consoleClearBtn");
-  const consoleToggleBtn = document.getElementById("consoleToggleBtn");
-  const consoleLog = document.getElementById("consoleLog");
-  let logCount = 0;
-
   function log(message, type = "info") {
-    if (!consoleBody) return;
-    const now = new Date();
-    const time = now.toLocaleTimeString("id-ID", { hour12: false });
-    const line = document.createElement("div");
-    line.className = "console-line";
-    line.innerHTML = `<span class="console-time">${time}</span><span class="console-msg ${type}">${escapeHtml(message)}</span>`;
-    consoleBody.appendChild(line);
-    consoleBody.scrollTop = consoleBody.scrollHeight;
-    logCount++;
-    if (consoleCount) consoleCount.textContent = String(logCount);
-    const excess = consoleBody.children.length - 200;
-    for (let i = 0; i < excess; i++) consoleBody.removeChild(consoleBody.firstChild);
+    const logger = type === "error" ? console.error : type === "warn" ? console.warn : console.info;
+    logger.call(console, message);
   }
 
-  consoleClearBtn?.addEventListener("click", () => {
-    if (!consoleBody) return;
-    consoleBody.innerHTML = "";
-    logCount = 0;
-    if (consoleCount) consoleCount.textContent = "0";
-    log("Console cleared.", "info");
-  });
-
-  consoleToggleBtn?.addEventListener("click", () => {
-    if (!consoleLog) return;
-    consoleLog.classList.toggle("collapsed");
-    consoleToggleBtn.textContent = consoleLog.classList.contains("collapsed") ? "+" : "−";
-  });
-
-  log("Console ready.", "info");
   log(`OS: ${isMac ? "macOS" : "Windows/Linux"} — shortcut: ${isMac ? "⌘" : "Ctrl"}`, "info");
 
   // ═══════════════ TOAST ═══════════════
@@ -128,10 +95,16 @@
     ta.style.position = "fixed";
     ta.style.left = "-9999px";
     document.body.appendChild(ta);
-    ta.select();
-    try { document.execCommand("copy"); showFeedback("✅ Disalin (fallback)"); }
-    catch { showFeedback("❌ Gagal menyalin"); }
+    let copied = false;
+    try {
+      ta.focus();
+      ta.select();
+      ta.setSelectionRange(0, ta.value.length);
+      copied = document.execCommand("copy");
+    } catch { copied = false; }
     document.body.removeChild(ta);
+    showFeedback(copied ? "✅ Disalin (fallback)" : "❌ Gagal menyalin. Clipboard diblokir browser.");
+    return copied;
   }
 
   // ═══════════════ TAB NAVIGATION ═══════════════
@@ -156,22 +129,16 @@
     const targetId = activeBtn.id;
     navButtons.forEach((btn) => {
       btn.classList.remove("active");
-      btn.setAttribute("aria-selected", "false");
-      btn.setAttribute("tabindex", "-1");
+      btn.removeAttribute("aria-current");
     });
     Object.values(tabContents).forEach((c) => c && c.classList.remove("active"));
     activeBtn.classList.add("active");
-    activeBtn.setAttribute("aria-selected", "true");
-    activeBtn.setAttribute("tabindex", "0");
+    activeBtn.setAttribute("aria-current", "page");
     const targetContent = tabContents[targetId];
     if (targetContent) {
       targetContent.classList.add("active");
       const mainContent = document.querySelector(".content");
       if (mainContent) mainContent.scrollTop = 0;
-      if (consoleLog && consoleLog.classList.contains("collapsed")) {
-        consoleLog.classList.remove("collapsed");
-        if (consoleToggleBtn) consoleToggleBtn.textContent = "−";
-      }
       log(`Switched to: ${tabNames[targetId] || targetId}`, "info");
     }
   }
@@ -179,14 +146,17 @@
   navButtons.forEach((btn) => {
     btn.addEventListener("click", () => switchTab(btn));
     btn.addEventListener("keydown", (event) => {
-      let nextIndex = navButtons.indexOf(btn);
-      if (event.key === "ArrowDown" || event.key === "ArrowRight") nextIndex = (nextIndex + 1) % navButtons.length;
-      else if (event.key === "ArrowUp" || event.key === "ArrowLeft") nextIndex = (nextIndex - 1 + navButtons.length) % navButtons.length;
+      const visibleButtons = navButtons.filter((button) => !button.classList.contains("hidden"));
+      const currentIndex = visibleButtons.indexOf(btn);
+      if (currentIndex < 0) return;
+      let nextIndex = currentIndex;
+      if (event.key === "ArrowDown" || event.key === "ArrowRight") nextIndex = (currentIndex + 1) % visibleButtons.length;
+      else if (event.key === "ArrowUp" || event.key === "ArrowLeft") nextIndex = (currentIndex - 1 + visibleButtons.length) % visibleButtons.length;
       else if (event.key === "Home") nextIndex = 0;
-      else if (event.key === "End") nextIndex = navButtons.length - 1;
+      else if (event.key === "End") nextIndex = visibleButtons.length - 1;
       else return;
       event.preventDefault();
-      const nextButton = navButtons[nextIndex];
+      const nextButton = visibleButtons[nextIndex];
       switchTab(nextButton);
       nextButton.focus();
     });
@@ -202,7 +172,6 @@
       const kw = btn.dataset.keywords?.toLowerCase() || "";
       const matches = !q || label.includes(q) || kw.includes(q);
       btn.classList.toggle("hidden", !matches);
-      btn.tabIndex = matches ? 0 : -1;
       if (matches) visible++;
     });
   });
@@ -227,7 +196,6 @@
       { icon: "?", label: "Panduan penggunaan", hint: "", action: () => switchTab(document.getElementById("tab-help")) },
       { icon: "▸", label: "Jalankan cek pergantian domain", hint: isMac ? "⌘↵" : "Ctrl+Enter", action: () => { switchTab(document.getElementById("tab-home")); setTimeout(performCheck, 100); } },
       { icon: "⎘", label: "Copy hasil grouping domain", hint: "", action: () => { switchTab(document.getElementById("tab-profile")); setTimeout(() => document.getElementById("btn-copy-output")?.click(), 100); } },
-      { icon: "◇", label: "Clear console log", hint: "", action: () => consoleClearBtn?.click() },
       { icon: "▸", label: "Jalankan server mapping", hint: s + "5", action: () => { switchTab(document.getElementById("tab-server")); setTimeout(() => window.processServerMapping?.(), 100); } },
       { icon: "↻", label: "Reset checker", hint: "", action: () => { switchTab(document.getElementById("tab-home")); setTimeout(resetChecker, 100); } },
     ];
@@ -698,6 +666,7 @@
     const grouped = {};
     rules.forEach((r) => (grouped[r.brand] = []));
 
+    const unmatched = [];
     rawdomains.forEach((domain) => {
       const domainLower = domain.toLowerCase();
       let matched = null, longest = "";
@@ -710,6 +679,7 @@
         }
       }
       if (matched) grouped[matched.brand].push(domain);
+      else unmatched.push(domain);
     });
 
     outputEl.innerHTML = "";
@@ -725,7 +695,11 @@
         outputEl.innerHTML += html;
       }
     }
-    if (brandCount === 0) {
+    if (unmatched.length > 0) {
+      totalGrouped += unmatched.length;
+      outputEl.innerHTML += `<div class="brand-group"><div class="brand-header">BRAND TIDAK DIKENALI</div>${unmatched.map((domain) => `<div class="domain-item">${escapeHtml(domain)}</div>`).join("")}</div>`;
+    }
+    if (brandCount === 0 && unmatched.length === 0) {
       outputEl.innerHTML = `<div class="empty-state"><div class="empty-state-icon">◌</div><div class="empty-state-title">Belum ada data</div><div class="empty-state-desc">Domain akan muncul otomatis di sini.</div></div>`;
     }
     if (groupCount) groupCount.textContent = `${brandCount} BRAND${brandCount === 1 ? "" : "S"} · ${totalGrouped} DOMAIN${totalGrouped === 1 ? "" : "S"}`;
@@ -927,6 +901,8 @@
 
   let processedDomains = [];
   let processedNS = [];
+  let allProcessedDomains = [];
+  let allProcessedNS = [];
   let lastFocusedCell = null;
   let renderTimeout = null;
 
@@ -959,14 +935,15 @@
       }
 
       const groups = {};
+      const normal = [];
       rawPairs.forEach((p) => {
         const k = p.ns.trim().toLowerCase();
-        if (!k) return;
+        if (!k) { normal.push(p); return; }
         if (!groups[k]) groups[k] = { originalNS: p.ns, domains: [] };
         if (!groups[k].domains.includes(p.domain)) groups[k].domains.push(p.domain);
       });
 
-      const bulk = [], normal = [];
+      const bulk = [];
       Object.keys(groups).forEach((k) => {
         const g = groups[k];
         if (g.domains.length > 1) bulk.push(g);
@@ -975,6 +952,8 @@
 
       processedDomains = normal.map((p) => p.domain);
       processedNS = normal.map((p) => p.ns);
+      allProcessedDomains = Array.from(new Set(rawPairs.map((p) => p.domain)));
+      allProcessedNS = Array.from(new Set(rawPairs.flatMap((p) => p.ns.split(",")).map((ns) => ns.trim()).filter(Boolean)));
       renderTable();
       renderBulk(bulk);
       if (bulkCount) bulkCount.textContent = `${bulk.length} GROUP${bulk.length === 1 ? "" : "S"}`;
@@ -1020,6 +999,7 @@
   }
 
   function renderTable() {
+    const restoreCellFocus = resultTable.contains(document.activeElement);
     const count = processedDomains.length;
     if (rowCount) rowCount.textContent = count;
     if (count === 0) {
@@ -1046,12 +1026,10 @@
     resultTable.innerHTML = "";
     resultTable.appendChild(frag);
 
-    if (lastFocusedCell) {
+    if (restoreCellFocus && lastFocusedCell) {
       const cell = resultTable.querySelector(`td[data-row="${lastFocusedCell.row}"][data-col="${lastFocusedCell.col}"]`);
       if (cell) { setTimeout(() => cell.focus(), 40); return; }
     }
-    const first = resultTable.querySelector("td[tabindex]");
-    if (first) setTimeout(() => first.focus(), 40);
   }
 
   function saveFocusedCell(cell) {
@@ -1179,29 +1157,49 @@
   });
 
   document.getElementById("copyAllBtn")?.addEventListener("click", () => {
-    if (processedDomains.length === 0) { showFeedback("⚠ Tidak ada domain"); return; }
-    navigator.clipboard.writeText(processedDomains.join("\n")).then(() => {
-      showFeedback(`✅ ${processedDomains.length} domain disalin`);
-      log(`Copy all: ${processedDomains.length}`, "success");
-    }).catch(() => fallbackCopy(processedDomains.join("\n")));
+    if (allProcessedDomains.length === 0) { showFeedback("⚠ Tidak ada domain"); return; }
+    const text = allProcessedDomains.join("\n");
+    navigator.clipboard.writeText(text).then(() => {
+      showFeedback(`✅ ${allProcessedDomains.length} domain disalin`);
+      log(`Copy all: ${allProcessedDomains.length}`, "success");
+    }).catch(() => fallbackCopy(text));
   });
 
   document.getElementById("copyNsBtn")?.addEventListener("click", () => {
-    if (processedNS.length === 0) { showFeedback("⚠ Tidak ada NS"); return; }
-    navigator.clipboard.writeText(processedNS.join("\n")).then(() => {
-      showFeedback(`✅ ${processedNS.length} NS disalin`);
-      log(`Copy all NS: ${processedNS.length}`, "success");
-    }).catch(() => fallbackCopy(processedNS.join("\n")));
+    if (allProcessedNS.length === 0) { showFeedback("⚠ Tidak ada NS"); return; }
+    const text = allProcessedNS.join("\n");
+    navigator.clipboard.writeText(text).then(() => {
+      showFeedback(`✅ ${allProcessedNS.length} NS disalin`);
+      log(`Copy all NS: ${allProcessedNS.length}`, "success");
+    }).catch(() => fallbackCopy(text));
   });
 
   if (inputData) { inputData.addEventListener("input", processData); processData(); }
 
   // ═══════════════ SERVER MAPPING ═══════════════
   const serverDatabase = [
-    { name: "SERVER 1", ips: ["132.48.200.96", "76.223.90.90"], brands: ["WDBOS", "JPSLOT", "BOSJOKO", "ZEUSSLOT", "MANCINGDUIT", "JUTAWANBET", "JUTAWAN", "LATOTO", "LA", "TOPANBOS88", "HOKBENTOTO", "HOKBEN"] },
-    { name: "SERVER 2", ips: ["132.48.203.169", "76.223.88.75"], brands: ["DEPOBOS", "ANGKABET", "TVTOTO", "PULITOTO", "PULI", "WATITOTO", "WATI", "FATCAI99", "FATCAI", "RUANGWD", "TOPWD", "PESONA805"] },
-    { name: "SERVER 3", ips: ["75.2.67.164", "3.33.129.68"], brands: ["BANDAR80", "BANDAR", "HOKIJITU", "INDOJP", "JUARA88", "JUARA", "LIGABANDOT", "LAPAK99", "LAPAK", "LAPAKMAHJONG", "ARENA303", "ARENA", "WDMAHJONG", "WDMAH", "SEJATIWIN", "MARKASWD", "CITAWIN"] },
+    { name: "SERVER 1", ips: ["13.248.200.96", "76.223.90.90"], brands: ["WDBOS", "JPSLOT", "ZEUSSLOT", "JUTAWANBET", "LATOTO", "TOPAN", "HOKBENTOTO", "MANCINGDUIT", "BOSJOKO"], aliases: ["TOPANBOS88"] },
+    { name: "SERVER 2", ips: ["13.248.203.169", "76.223.88.75"], brands: ["DEPOBOS", "ANGKABET", "TVTOTO", "PULITOTO", "WATITOTO", "FATCAI99", "RUANGWD", "TOPWD", "PESONA805"] },
+    { name: "SERVER 3", ips: ["75.2.67.164", "3.33.129.68"], brands: ["BANDAR80", "HOKIJITU", "JUARA88", "LIGABANDOT", "LAPAK99", "LAPAK", "WDMAHJONG", "SEJATIWIN", "ARENA303", "MARKASWD"] },
   ];
+
+  function matchesServerBrand(domain, brand) {
+    const hostname = cleanDomain(domain).split(".")[0].toLowerCase()
+      .replace(/aa/g, "a").replace(/oo/g, "o").replace(/ee/g, "e");
+    const keyword = brand.toLowerCase()
+      .replace(/aa/g, "a").replace(/oo/g, "o").replace(/ee/g, "e");
+    if (!hostname.startsWith(keyword)) return false;
+    const suffix = hostname.slice(keyword.length);
+    return suffix.length === 0 || /^[0-9-]/.test(suffix);
+  }
+
+  function findServerForName(name) {
+    const matches = serverDatabase.flatMap((server) => [...server.brands, ...(server.aliases || [])]
+      .filter((brand) => matchesServerBrand(name, brand))
+      .map((brand) => ({ server: server.name, length: brand.length })));
+    matches.sort((a, b) => b.length - a.length);
+    return matches[0]?.server || null;
+  }
 
   function renderServerDomainList(id, domains, emptyMsg) {
     const c = document.getElementById(id); if (!c) return;
@@ -1230,23 +1228,22 @@
     });
   }
 
+  function sortDomainsAlphabetically(domains) {
+    return domains.sort((a, b) => a.localeCompare(b, "id", { sensitivity: "base", numeric: true }));
+  }
+
   function processServerMapping() {
     const raw = document.getElementById("inputRawData")?.value || "";
     const lines = raw.split("\n").map((l) => l.trim()).filter(Boolean);
     const s1 = [], s2 = [], s3 = [], idn = [];
+    let currentServer = null;
 
     lines.forEach((line) => {
-      if (!line.includes(".")) return;
-      const ll = line.toLowerCase();
-      let target = null;
-      for (const srv of serverDatabase) {
-        for (const b of srv.brands) {
-          const k = b.toLowerCase();
-          const norm = ll.replace(/aa/g, "a").replace(/oo/g, "o").replace(/ee/g, "e");
-          if (norm.includes(k) || ll.includes(k) || norm.startsWith(k)) { target = srv.name; break; }
-        }
-        if (target) break;
+      if (!line.includes(".")) {
+        currentServer = findServerForName(line.replace(/[\[\]]/g, "").trim());
+        return;
       }
+      const target = currentServer || findServerForName(line);
       if (target === "SERVER 1") { if (!s1.includes(line)) s1.push(line); }
       else if (target === "SERVER 2") { if (!s2.includes(line)) s2.push(line); }
       else if (target === "SERVER 3") { if (!s3.includes(line)) s3.push(line); }
@@ -1254,13 +1251,21 @@
     });
 
     [[s1, 1], [s2, 2], [s3, 3]].forEach(([domains, n]) => {
+      sortDomainsAlphabetically(domains);
       renderServerDomainList(`server${n}Domains`, domains, "Belum ada domain untuk server ini.");
       const c = document.getElementById(`server${n}Count`);
       if (c) c.textContent = `${String(domains.length).padStart(2, "0")} ${domains.length === 1 ? "DOMAIN" : "DOMAINS"}`;
+      const summaryCount = document.getElementById(`server${n}SummaryCount`);
+      if (summaryCount) summaryCount.textContent = domains.length;
     });
+    sortDomainsAlphabetically(idn);
     renderServerDomainList("outputIdnFallback", idn, "Belum ada domain IDN.");
     const ic = document.getElementById("idnDomainCount");
     if (ic) ic.textContent = `${String(idn.length).padStart(2, "0")} DOMAINS`;
+    const idnSummaryCount = document.getElementById("idnSummaryCount");
+    if (idnSummaryCount) idnSummaryCount.textContent = idn.length;
+    const totalCount = document.getElementById("serverTotalCount");
+    if (totalCount) totalCount.textContent = s1.length + s2.length + s3.length + idn.length;
 
     log(`Server mapping: S1=${s1.length}, S2=${s2.length}, S3=${s3.length}, IDN=${idn.length}`, "success");
     showFeedback(`✅ Mapping: ${s1.length + s2.length + s3.length} domain terpetakan`);
@@ -1275,6 +1280,37 @@
       .then(() => { showFeedback(`✅ ${domains.length} baris SERVER ${n} disalin`); log(`Server ${n} copied: ${domains.length}`, "success"); })
       .catch(() => fallbackCopy(text));
   }
+
+  document.getElementById("copyAllServerDomainsBtn")?.addEventListener("click", () => {
+    const domains = [1, 2, 3].flatMap((n) => {
+      const container = document.getElementById(`server${n}Domains`);
+      return container
+        ? Array.from(container.querySelectorAll(".server-domain-cell")).map((domain) => domain.dataset.domain).filter(Boolean)
+        : [];
+    });
+    if (domains.length === 0) {
+      showFeedback("⚠ Tidak ada domain SERVER 1–3 untuk disalin");
+      log("Server mapping: no server domains to copy.", "warn");
+      return;
+    }
+    const text = domains.join("\n");
+    (navigator.clipboard ? navigator.clipboard.writeText(text) : Promise.reject())
+      .then(() => {
+        showFeedback(`✅ ${domains.length} domain SERVER 1–3 disalin`);
+        log(`All server domains copied: ${domains.length}`, "success");
+      })
+      .catch(() => fallbackCopy(text));
+  });
+
+  document.getElementById("copyIdnDomainsBtn")?.addEventListener("click", () => {
+    const container = document.getElementById("outputIdnFallback");
+    const domains = container ? Array.from(container.querySelectorAll(".server-domain-cell")).map((domain) => domain.dataset.domain).filter(Boolean) : [];
+    if (domains.length === 0) { showFeedback("⚠ Tidak ada domain IDN"); log("IDN: no domains to copy.", "warn"); return; }
+    const text = domains.join("\n");
+    (navigator.clipboard ? navigator.clipboard.writeText(text) : Promise.reject())
+      .then(() => { showFeedback(`✅ ${domains.length} domain IDN disalin`); log(`IDN copied: ${domains.length}`, "success"); })
+      .catch(() => fallbackCopy(text));
+  });
 
   document.getElementById("runServerMappingBtn")?.addEventListener("click", processServerMapping);
   document.querySelectorAll("[data-copy-server]").forEach((btn) => {
