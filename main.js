@@ -1178,9 +1178,9 @@
 
   // ═══════════════ SERVER MAPPING ═══════════════
   const serverDatabase = [
-    { name: "SERVER 1", ips: ["13.248.200.96", "76.223.90.90"], brands: ["WDBOS", "JPSLOT", "ZEUSSLOT", "JUTAWANBET", "LATOTO", "TOPAN", "HOKBENTOTO", "MANCINGDUIT", "BOSJOKO"], aliases: ["TOPANBOS88"] },
-    { name: "SERVER 2", ips: ["13.248.203.169", "76.223.88.75"], brands: ["DEPOBOS", "ANGKABET", "TVTOTO", "PULITOTO", "WATITOTO", "FATCAI99", "RUANGWD", "TOPWD", "PESONA805"] },
-    { name: "SERVER 3", ips: ["75.2.67.164", "3.33.129.68"], brands: ["BANDAR80", "HOKIJITU", "JUARA88", "LIGABANDOT", "LAPAK99", "LAPAK", "WDMAHJONG", "SEJATIWIN", "ARENA303", "MARKASWD"] },
+    { name: "SERVER 1", ips: ["13.248.200.96", "76.223.90.90"], brands: ["WDBOS", "JPSLOT", "ZEUSSLOT", "JUTAWANBET", "LATOTO", "TOPAN", "HOKBENTOTO", "MANCINGDUIT", "BOSJOKO"], aliases: ["JUTAWAN", "LA", "TOPANBOS"] },
+    { name: "SERVER 2", ips: ["13.248.203.169", "76.223.88.75"], brands: ["DEPOBOS", "ANGKABET", "TVTOTO", "PULITOTO", "WATITOTO", "FATCAI99", "RUANGWD", "TOPWD", "PESONA805"], aliases: ["FATCAI", "HOKBEN", "PULI", "WATI"] },
+    { name: "SERVER 3", ips: ["75.2.67.164", "3.33.129.68"], brands: ["BANDAR80", "HOKIJITU", "JUARA88", "LIGABANDOT", "LAPAK99", "LAPAK", "WDMAHJONG", "SEJATIWIN", "ARENA303", "MARKASWD"], aliases: ["ARENA", "BANDAAR", "JUARA", "CITAWIN"] },
   ];
 
   function matchesServerBrand(domain, brand) {
